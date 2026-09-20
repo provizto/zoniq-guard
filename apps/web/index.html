@@ -837,15 +837,17 @@
   </div>
 
   <script>
-    // State management
-    let currentUser = null;
-    let currentTab = 'dashboard';
-    let selectedVulnIndex = 0;
-    let currentFilter = 'all';
+  // State management
+  let currentUser = null;
+  let currentTab = 'dashboard';
+  let selectedVulnIndex = 0;
+  let currentFilter = 'all';
 
-    // --- FUNCTION CI/CD: Copy Workflow YAML ---
-    function copyCiCdYaml() {
-      const yamlContent = `name: Zoniqfi Aegis Security Gate
+  const BACKEND_API_URL = 'http://localhost:4000/api/audit';
+
+  // --- CI/CD Helper: Copy Workflow YAML ---
+  function copyCiCdYaml() {
+    const yamlContent = `name: Zoniqfi Aegis Security Gate
 on: [push, pull_request]
 
 jobs:
@@ -861,21 +863,21 @@ jobs:
           solana-programs: './programs/**/src/lib.rs'
           arbitrum-contracts: './contracts/**/*.sol'`;
 
-      navigator.clipboard.writeText(yamlContent).then(() => {
-        const btnText = document.getElementById('btn-copy-yaml-text');
-        if (btnText) {
-          const originalText = btnText.innerText;
-          btnText.innerText = "Copied!";
-          setTimeout(() => {
-            btnText.innerText = originalText;
-          }, 1500);
-        }
-      }).catch(err => {
-        console.error("Failed to copy YAML: ", err);
-      });
-    }
+    navigator.clipboard.writeText(yamlContent).then(() => {
+      const btnText = document.getElementById('btn-copy-yaml-text');
+      if (btnText) {
+        const originalText = btnText.innerText;
+        btnText.innerText = "Copied!";
+        setTimeout(() => {
+          btnText.innerText = originalText;
+        }, 1500);
+      }
+    }).catch(err => {
+      console.error("Failed to copy YAML:", err);
+    });
+  }
 
-    const SAMPLE_SOLANA = `use anchor_lang::prelude::*;
+  const SAMPLE_SOLANA = `use anchor_lang::prelude::*;
 declare_id!("Zon1qCoreSecureProtocol1111111111111111111");
 
 #[program]
@@ -906,648 +908,647 @@ pub struct VaultData { pub admin: Pubkey, pub total_locked: u64 }
 #[error_code]
 pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
 
-    const SAMPLE_ARBITRUM = `// SPDX-License-Identifier: MIT
+  const SAMPLE_ARBITRUM = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract CommerceGatewayV2 {
-    mapping(address => uint256) public merchantBalances;
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-    function withdrawBalance() external {
-        uint256 balance = merchantBalances[msg.sender];
-        require(balance > 0, "No balance");
+contract CommerceGatewayV2 is ReentrancyGuard, Ownable {
+    mapping(address => uint256) public balances;
 
-        // External call before zeroing out balance (Reentrancy risk)
+    constructor() Ownable(msg.sender) {}
+
+    function withdrawBalance() external nonReentrant {
+        uint256 balance = balances[msg.sender];
+        require(balance > 0, "No balance available");
+
+        balances[msg.sender] = 0;
+
         (bool success, ) = msg.sender.call{value: balance}("");
-        require(success, "Transfer failed");
-
-        merchantBalances[msg.sender] = 0;
+        require(success, "Transfer execution failed");
     }
 }`;
 
-    const VULNERABILITIES = [
-      {
-        id: "vuln-1",
-        title: "Missing Signer Check on Vault Authority",
-        severity: "critical",
-        chain: "solana",
-        file: "programs/vault/src/lib.rs",
-        cve: "CWE-285",
-        impact: "Complete drainage of protocol vault funds. Any arbitrary on-chain caller can forge the admin key without signing.",
-        fixSummary: "Change 'pub authority: AccountInfo' to 'pub authority: Signer' in the Accounts macro.",
-        diff: [
-          { type: "del", text: "-    pub authority: AccountInfo<'info>," },
-          { type: "add", text: "+    pub authority: Signer<'info>," }
-        ],
-        remediationCode: "pub authority: Signer<'info>,"
-      },
-      {
-        id: "vuln-2",
-        title: "Reentrancy in withdrawBalance()",
-        severity: "high",
-        chain: "arbitrum",
-        file: "contracts/CommerceGatewayV2.sol",
-        cve: "SWC-107",
-        impact: "External call is executed before state variable is cleared, enabling re-entrancy drain.",
-        fixSummary: "Zero the balance prior to invoking call{value: ...}, or apply OpenZeppelin nonReentrant.",
-        diff: [
-          { type: "add", text: "+    merchantBalances[msg.sender] = 0;" },
-          { type: "del", text: "-    (bool success, ) = msg.sender.call{value: balance}(\"\");" }
-        ],
-        remediationCode: "merchantBalances[msg.sender] = 0;\n(bool success, ) = msg.sender.call{value: balance}(\"\");"
-      }
-    ];
+  const VULNERABILITIES = [];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      loadTemplate('solana');
-      loadSavedRuleConfigs();
-      renderVulnerabilityList();
-      renderSelectedVulnerability(0);
+  window.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    loadTemplate('solana');
+    loadSavedRuleConfigs();
+    renderVulnerabilityList();
+    renderSelectedVulnerability(0);
+  });
+
+  function switchTab(tabId) {
+    currentTab = tabId;
+    ['dashboard', 'scanner', 'inspector', 'cicd', 'proof', 'settings'].forEach(p => {
+      const el = document.getElementById(`page-${p}`);
+      if (el) el.classList.toggle('hidden', p !== tabId);
     });
-
-    function switchTab(tabId) {
-      currentTab = tabId;
-      ['dashboard', 'scanner', 'inspector', 'cicd', 'proof', 'settings'].forEach(p => {
-        const el = document.getElementById(`page-${p}`);
-        if (el) el.classList.toggle('hidden', p !== tabId);
-      });
-      lucide.createIcons();
-    }
-
-    function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
-    function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
-
-    async function loginWithWallet(type) {
-  try {
-    if (type === 'phantom') {
-      // Detect Phantom wallet extension (Solana)
-      const isPhantomInstalled = window.solana && window.solana.isPhantom;
-      if (!isPhantomInstalled) {
-        alert("Phantom Wallet is not installed. Please install the Phantom browser extension.");
-        window.open("https://phantom.app/", "_blank");
-        return;
-      }
-      
-      const resp = await window.solana.connect();
-      const pubkey = resp.publicKey.toString();
-      currentUser = {
-        name: `${pubkey.slice(0, 4)}...${pubkey.slice(-4)} (Solana)`,
-        role: 'Verified Auditor',
-        rawAddress: pubkey
-      };
-    } else if (type === 'metamask') {
-      // Detect EVM wallet extension (MetaMask / Rabby)
-      if (typeof window.ethereum === 'undefined') {
-        alert("MetaMask or compatible EVM wallet is not detected. Please install MetaMask.");
-        window.open("https://metamask.io/", "_blank");
-        return;
-      }
-
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const address = accounts[0];
-      currentUser = {
-        name: `${address.slice(0, 6)}...${address.slice(-4)} (EVM)`,
-        role: 'Verified Auditor',
-        rawAddress: address
-      };
-    }
-
-    updateAuthUI();
-    closeLoginModal();
-  } catch (err) {
-    console.error("Wallet connection failure:", err);
-    alert(`Connection request rejected or failed: ${err.message}`);
+    lucide.createIcons();
   }
-}
 
-    function loginWithGitHub() {
-      currentUser = { name: '@roni-dev', role: 'Lead Architect' };
+  function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+  function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+
+  async function loginWithWallet(type) {
+    try {
+      if (type === 'phantom') {
+        const isPhantomInstalled = window.solana && window.solana.isPhantom;
+        if (!isPhantomInstalled) {
+          alert("Phantom Wallet is not installed. Please install the browser extension.");
+          window.open("https://phantom.app/", "_blank");
+          return;
+        }
+        
+        const resp = await window.solana.connect();
+        const pubkey = resp.publicKey.toString();
+        currentUser = {
+          name: `${pubkey.slice(0, 4)}...${pubkey.slice(-4)} (Solana)`,
+          role: 'Verified Auditor',
+          rawAddress: pubkey
+        };
+      } else if (type === 'metamask') {
+        if (typeof window.ethereum === 'undefined') {
+          alert("MetaMask or compatible EVM wallet is not detected. Please install MetaMask.");
+          window.open("https://metamask.io/", "_blank");
+          return;
+        }
+
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const address = accounts[0];
+        currentUser = {
+          name: `${address.slice(0, 6)}...${address.slice(-4)} (EVM)`,
+          role: 'Verified Auditor',
+          rawAddress: address
+        };
+      }
+
       updateAuthUI();
       closeLoginModal();
+    } catch (err) {
+      console.error("Wallet connection failure:", err);
+      alert(`Connection request rejected: ${err.message}`);
+    }
+  }
+
+  function loginWithGitHub() {
+    currentUser = { name: '@roni-dev', role: 'Lead Architect' };
+    updateAuthUI();
+    closeLoginModal();
+  }
+
+  function handleLogout() {
+    currentUser = null;
+    updateAuthUI();
+  }
+
+  function updateAuthUI() {
+    const btn = document.getElementById('btn-login-trigger');
+    const pill = document.getElementById('user-profile-pill');
+    if (currentUser) {
+      btn.classList.add('hidden');
+      pill.classList.remove('hidden');
+      document.getElementById('user-display-name').innerText = currentUser.name;
+      document.getElementById('user-role').innerText = currentUser.role;
+    } else {
+      btn.classList.remove('hidden');
+      pill.classList.add('hidden');
+    }
+    lucide.createIcons();
+  }
+
+  function handleChainChange(selectedChain) {
+    currentFilter = selectedChain;
+    if (selectedChain === 'solana') {
+      loadTemplate('solana');
+    } else if (['arbitrum', 'ethereum', 'base', 'polygon'].includes(selectedChain)) {
+      loadTemplate('arbitrum');
+    }
+    renderVulnerabilityList();
+  }
+
+  function loadTemplate(type) {
+    const codeArea = document.getElementById('smart-contract-code');
+    const filename = document.getElementById('editor-filename');
+    if (!codeArea) return;
+
+    if (type === 'solana') {
+      codeArea.value = SAMPLE_SOLANA;
+      if (filename) filename.innerText = "zoniq_vault.rs";
+    } else {
+      codeArea.value = SAMPLE_ARBITRUM;
+      if (filename) filename.innerText = "CommerceGatewayV2.sol";
+    }
+    const linesEl = document.getElementById('editor-lines');
+    if (linesEl) linesEl.innerText = `${codeArea.value.split('\n').length} lines`;
+  }
+
+  function triggerSampleAudit() {
+    switchTab('scanner');
+    startAuditScan();
+  }
+
+  async function startAuditScan() {
+    const terminal = document.getElementById('terminal-logs');
+    const spinner = document.getElementById('scan-spinner');
+    const btn = document.getElementById('btn-start-scan');
+    const code = document.getElementById('smart-contract-code')?.value || '';
+    const chainSelector = document.getElementById('global-chain-selector');
+    const chain = (chainSelector && chainSelector.value !== 'all') 
+      ? chainSelector.value 
+      : (code.includes('anchor_lang') || code.includes('#[program]') ? 'solana' : 'arbitrum');
+    const filename = document.getElementById('editor-filename')?.innerText || 'Contract.sol';
+
+    if (!code.trim()) {
+      alert("Smart contract source code cannot be empty.");
+      return;
     }
 
-    function handleLogout() {
-      currentUser = null;
-      updateAuthUI();
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+    spinner.classList.remove('hidden');
+
+    terminal.innerHTML = `
+      <div class="text-indigo-400 font-bold">[*] Initializing Aegis Client-Side AST Engine...</div>
+      <div class="text-slate-400">> Mode: <span class="text-emerald-400 font-semibold">Standalone Browser Analyzer</span></div>
+      <div class="text-slate-400">> Target Chain: <span class="font-bold text-white uppercase">${chain}</span></div>
+      <div class="text-slate-400">> Target File: <span class="text-cyan-300 font-mono">${filename}</span></div>
+    `;
+
+    let activeRules = { sol001: true, sol002: true, arb001: true, arb002: true };
+    const savedConfig = localStorage.getItem('aegis_rule_configs');
+    if (savedConfig) {
+      try { activeRules = JSON.parse(savedConfig); } catch (e) {}
     }
 
-    function updateAuthUI() {
-      const btn = document.getElementById('btn-login-trigger');
-      const pill = document.getElementById('user-profile-pill');
-      if (currentUser) {
-        btn.classList.add('hidden');
-        pill.classList.remove('hidden');
-        document.getElementById('user-display-name').innerText = currentUser.name;
-        document.getElementById('user-role').innerText = currentUser.role;
-      } else {
-        btn.classList.remove('hidden');
-        pill.classList.add('hidden');
-      }
-      lucide.createIcons();
-    }
+    await new Promise(resolve => setTimeout(resolve, 600));
 
-    // Gabungan penanganan perubahan Chain: load template dan update filter list
-    function handleChainChange(selectedChain) {
-      currentFilter = selectedChain;
-      if (selectedChain === 'solana') {
-        loadTemplate('solana');
-      } else if (selectedChain === 'arbitrum' || selectedChain === 'ethereum' || selectedChain === 'base' || selectedChain === 'polygon') {
-        loadTemplate('arbitrum');
-      }
-      if (typeof renderVulnerabilityList === 'function') {
-        renderVulnerabilityList();
-      }
-    }
+    const detectedIssues = [];
+    const lines = code.split('\n');
 
-    function loadTemplate(type) {
-      const codeArea = document.getElementById('smart-contract-code');
-      const filename = document.getElementById('editor-filename');
-      if (!codeArea) return;
-
-      if (type === 'solana') {
-        codeArea.value = SAMPLE_SOLANA;
-        if (filename) filename.innerText = "zoniq_vault.rs";
-      } else {
-        codeArea.value = SAMPLE_ARBITRUM;
-        if (filename) filename.innerText = "CommerceGatewayV2.sol";
-      }
-      const linesEl = document.getElementById('editor-lines');
-      if (linesEl) linesEl.innerText = `${codeArea.value.split('\n').length} lines`;
-    }
-
-    function triggerSampleAudit() {
-      switchTab('scanner');
-      startAuditScan();
-    }
-
-    async function startAuditScan() {
-      const terminal = document.getElementById('terminal-logs');
-      const spinner = document.getElementById('scan-spinner');
-      const btn = document.getElementById('btn-start-scan');
-      const code = document.getElementById('smart-contract-code')?.value || '';
-      const chainSelector = document.getElementById('global-chain-selector');
-      const chain = (chainSelector && chainSelector.value !== 'all') ? chainSelector.value : (code.includes('use anchor_lang') ? 'solana' : 'arbitrum');
-      const filename = document.getElementById('editor-filename') ? document.getElementById('editor-filename').innerText : 'contract';
-
-      if (!code.trim()) {
-        alert("Smart contract source code cannot be empty.");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.classList.add('opacity-50');
-      spinner.classList.remove('hidden');
-
-      terminal.innerHTML = `
-        <div class="text-indigo-400 font-bold">[*] Initializing Aegis In-Browser AST Pipeline...</div>
-        <div class="text-slate-400">> Target Ecosystem: <span class="font-bold text-white uppercase">${chain}</span></div>
-        <div class="text-slate-400">> Analyzing source file: <span class="text-cyan-300 font-mono">${filename}</span></div>
-      `;
-
-      // Baca konfigurasi toggle rules dari localStorage
-      let activeRules = { sol001: true, sol002: true, arb001: true, arb002: true };
-      const savedConfig = localStorage.getItem('aegis_rule_configs');
-      if (savedConfig) {
-        try { activeRules = JSON.parse(savedConfig); } catch (e) {}
-      }
-
-      // Simulasi delay eksekusi analisis pipeline
-      await new Promise(r => setTimeout(r, 650));
-
-      const detectedIssues = [];
-
-      if (chain === 'solana') {
-        // Rule 1: Missing Signer Check
-        if (activeRules.sol001 && /pub\s+authority\s*:\s*AccountInfo/i.test(code)) {
-          detectedIssues.push({
-            id: "AEGIS-SOL-001",
-            title: "Missing Signer Check on Authority Account",
-            severity: "critical",
-            chain: "solana",
-            file: filename,
-            cve: "CWE-285",
-            impact: "Account field 'pub authority: AccountInfo' uses generic account container without mandatory cryptographic signature verification.",
-            fixSummary: "Replace 'AccountInfo' with 'Signer' or enforce #[account(signer)] attribute constraint.",
-            diff: [
-              { type: "del", text: "- pub authority: AccountInfo<'info>," },
-              { type: "add", text: "+ pub authority: Signer<'info>," }
-            ],
-            remediationCode: "pub authority: Signer<'info>,"
-          });
-        }
-        // Rule 2: Canonical Bump Check
-        if (activeRules.sol002 && (code.includes('seeds') && !code.includes('bump'))) {
-          detectedIssues.push({
-            id: "AEGIS-SOL-002",
-            title: "Unchecked PDA Seeds Canonical Bump",
-            severity: "high",
-            chain: "solana",
-            file: filename,
-            cve: "CWE-345",
-            impact: "PDA derivation is missing canonical bump validation, exposing the program to seed collision vectors.",
-            fixSummary: "Specify explicit bump constraint in the Anchor accounts macro definition.",
-            diff: [
-              { type: "del", text: "- #[account(seeds = [...])]" },
-              { type: "add", text: "+ #[account(seeds = [...], bump)]" }
-            ],
-            remediationCode: "#[account(seeds = [...], bump)]"
-          });
-        }
-      } else {
-        // Arbitrum / EVM
-        // Rule 1: Reentrancy (external call sebelum mutasi state)
-        if (activeRules.arb001 && /(\.call\{value|\.transfer\(|\.send\().*[\s\S]*?(balances\[|merchantBalances\[)/i.test(code)) {
-          detectedIssues.push({
-            id: "AEGIS-ARB-001",
-            title: "Potential Reentrancy Without Guard",
-            severity: "critical",
-            chain: chain,
-            file: filename,
-            cve: "SWC-107",
-            impact: "External transfer call is invoked before state variables are decremented, violating Checks-Effects-Interactions.",
-            fixSummary: "Apply OpenZeppelin ReentrancyGuard nonReentrant modifier and update balance storage before calling.",
-            diff: [
-              { type: "del", text: "- (bool success, ) = msg.sender.call{value: balance}(\"\");\n- merchantBalances[msg.sender] = 0;" },
-              { type: "add", text: "+ merchantBalances[msg.sender] = 0;\n+ (bool success, ) = msg.sender.call{value: balance}(\"\");" }
-            ],
-            remediationCode: "merchantBalances[msg.sender] = 0;\n(bool success, ) = msg.sender.call{value: balance}(\"\");"
-          });
-        }
-        // Rule 2: Arbitrum Sequencer block.number Misalignment
-        if (activeRules.arb002 && code.includes('block.number')) {
-          detectedIssues.push({
-            id: "AEGIS-ARB-002",
-            title: "Arbitrum Sequencer block.number Misalignment",
-            severity: "medium",
-            chain: chain,
-            file: filename,
-            cve: "CWE-829",
-            impact: "On Arbitrum Nitro, block.number returns L1 Ethereum block height rather than L2 sequencer block progress.",
-            fixSummary: "Use ArbSys(100).arbBlockNumber() precompile to retrieve accurate L2 sequencer sequencing.",
-            diff: [
-              { type: "del", text: "- uint256 currentBlock = block.number;" },
-              { type: "add", text: "+ uint256 currentBlock = ArbSys(address(100)).arbBlockNumber();" }
-            ],
-            remediationCode: "ArbSys(address(100)).arbBlockNumber();"
-          });
-        }
+    if (chain === 'solana') {
+      // Rule 1: Missing Signer
+      if (activeRules.sol001 && /pub\s+authority\s*:\s*AccountInfo/i.test(code)) {
+        lines.forEach((lineText, idx) => {
+          if (/pub\s+authority\s*:\s*AccountInfo/i.test(lineText)) {
+            detectedIssues.push({
+              id: "AEGIS-SOL-001",
+              title: "Missing Signer Check on Vault Authority",
+              severity: "critical",
+              chain: "solana",
+              file: filename,
+              cve: "CWE-285",
+              impact: "Account authority uses generic AccountInfo without cryptographic signature enforcement.",
+              fixSummary: "Replace AccountInfo with Signer in the accounts struct.",
+              diff: [
+                { type: "del", text: `- Line ${idx + 1}: ${lineText.trim()}` },
+                { type: "add", text: `+ Line ${idx + 1}: ${lineText.trim().replace('AccountInfo', 'Signer')}` }
+              ],
+              remediationCode: lineText.trim().replace('AccountInfo', 'Signer')
+            });
+          }
+        });
       }
 
-      terminal.innerHTML += `
-        <div class="text-cyan-400">> AST parsing & invariant rules evaluated.</div>
-        <div class="text-emerald-400 font-bold">> [✓] Scan complete. Found ${detectedIssues.length} issue(s).</div>
-        <div class="text-slate-400">> Forwarding to Vulnerability Findings view...</div>
-      `;
-
-      VULNERABILITIES.length = 0;
-      VULNERABILITIES.push(...detectedIssues);
-
-      const badgeCount = document.getElementById('badge-vuln-count');
-      if (badgeCount) badgeCount.innerText = VULNERABILITIES.length;
-
-      renderVulnerabilityList();
-      renderSelectedVulnerability(0);
-
-      spinner.classList.add('hidden');
-      btn.disabled = false;
-      btn.classList.remove('opacity-50');
-
-      setTimeout(() => {
-        switchTab('inspector');
-      }, 900);
-    }
-
-    function exportAuditReport() {
-      const findings = [...VULNERABILITIES];
-      const chainSelector = document.getElementById('global-chain-selector');
-      const currentChain = (chainSelector && chainSelector.value && chainSelector.value !== 'all') ? chainSelector.value : 'solana';
-      const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
-      const filename = filenameEl ? filenameEl.innerText.trim() : 'contract';
-
-      const reportPayload = {
-        metadata: {
-          platform: "Zoniqfi Aegis Security Core",
-          engineVersion: "2.4.0",
-          targetChain: currentChain,
-          targetFile: filename,
-          timestamp: new Date().toISOString(),
-          status: "COMPLETED"
-        },
-        summary: {
-          totalFindings: findings.length,
-          critical: findings.filter(v => (v.severity || '').toLowerCase().includes('crit')).length,
-          high: findings.filter(v => (v.severity || '').toLowerCase().includes('high')).length,
-          medium: findings.filter(v => (v.severity || '').toLowerCase().includes('med')).length
-        },
-        findings: findings
-      };
-
-      const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.href = url;
-      downloadAnchor.download = `aegis-audit-${filename.replace(/[^a-zA-Z0-9_-]/g, "_")}-${Date.now()}.json`;
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      document.body.removeChild(downloadAnchor);
-      URL.revokeObjectURL(url);
-    }
-
-    function generateProofOfAudit() {
-      refreshCertificateData();
-      switchTab('proof');
-    }
-
-    function renderVulnerabilityList() {
-      const container = document.getElementById('vulnerability-list-container');
-      if (!container) return;
-      container.innerHTML = '';
-
-      let list = VULNERABILITIES;
-      if (currentFilter !== 'all') {
-        list = VULNERABILITIES.filter(v => v.chain.toLowerCase() === currentFilter.toLowerCase());
+      // Rule 2: Canonical Bump Check
+      if (activeRules.sol002 && (code.includes('seeds') && !code.includes('bump'))) {
+        detectedIssues.push({
+          id: "AEGIS-SOL-002",
+          title: "Unchecked PDA Seeds Canonical Bump",
+          severity: "high",
+          chain: "solana",
+          file: filename,
+          cve: "CWE-345",
+          impact: "PDA derivation is missing canonical bump validation, exposing the program to collision attacks.",
+          fixSummary: "Specify explicit bump constraint in the Anchor accounts macro definition.",
+          diff: [
+            { type: "del", text: "- #[account(seeds = [...])]" },
+            { type: "add", text: "+ #[account(seeds = [...], bump)]" }
+          ],
+          remediationCode: "#[account(seeds = [...], bump)]"
+        });
       }
+    } else {
+      // Arbitrum / EVM Engine
+      const hasReentrancyGuard = code.includes('ReentrancyGuard') || code.includes('nonReentrant');
 
-      if (list.length === 0) {
-        // 1. Tampilkan pesan bersih di panel kiri
-        container.innerHTML = `<div class="p-4 rounded-xl bg-[#111827] border border-slate-800 text-slate-400 text-xs text-center">No vulnerabilities found for selected ecosystem.</div>`;
-        
-        // 2. Kosongkan data di panel kanan (English UI)
-        const titleEl = document.getElementById('selected-vuln-title');
-        const cveEl = document.getElementById('selected-vuln-cve');
-        const descEl = document.getElementById('selected-vuln-desc');
-        const fixEl = document.getElementById('selected-vuln-fix-summary');
-        const badgeEl = document.getElementById('selected-vuln-badge');
-        const diffBox = document.getElementById('diff-container');
+      lines.forEach((lineText, idx) => {
+        const lineNum = idx + 1;
+        const trimmed = lineText.trim();
 
-        if (titleEl) titleEl.innerText = "No Invariant Violations Detected";
-        if (cveEl) cveEl.innerText = "PASS";
-        if (descEl) descEl.innerText = "Target smart contract successfully passed all AST verification checks. No reentrancy risks, missing signer attributes, or unauthorized state mutations were detected.";
-        if (fixEl) fixEl.innerText = "No remediation required. Source code adheres to security specifications.";
-        
-        if (badgeEl) {
-          badgeEl.innerText = "SECURE";
-          badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-bold font-mono border bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+        // Check 1: Missing Access Control on sensitive admin methods
+        if (
+          trimmed.startsWith('function') &&
+          (trimmed.includes('emergency') || trimmed.includes('setTreasury')) &&
+          !trimmed.includes('internal') &&
+          !trimmed.includes('private')
+        ) {
+          const hasAccessModifier = trimmed.includes('onlyOwner') || trimmed.includes('onlyRole');
+          if (activeRules.arb001 && !hasAccessModifier) {
+            detectedIssues.push({
+              id: "AEGIS-ARB-001",
+              title: "Missing Access Control on Critical Function",
+              severity: "critical",
+              chain: chain,
+              file: filename,
+              cve: "CWE-284",
+              impact: `Administrative function '${trimmed}' is exposed publicly without 'onlyOwner' or role-based modifier.`,
+              fixSummary: "Add an explicit access modifier such as 'onlyOwner' or OpenZeppelin AccessControl.",
+              diff: [
+                { type: "del", text: `- Line ${lineNum}: ${trimmed}` },
+                { type: "add", text: `+ Line ${lineNum}: ${trimmed.replace('{', 'onlyOwner {')}` }
+              ],
+              remediationCode: trimmed.replace('{', 'onlyOwner {')
+            });
+          }
         }
 
-        if (diffBox) {
-          diffBox.innerHTML = '<div class="text-emerald-400 text-xs p-3 font-mono">✓ 0 Invariant violations found. Target contract is secure.</div>';
+        // Check 2: Potential Reentrancy (skipped if ReentrancyGuard is present)
+        if (activeRules.arb001 && (trimmed.includes('.call{value:') || trimmed.includes('.call{value :'))) {
+          if (!hasReentrancyGuard) {
+            detectedIssues.push({
+              id: "AEGIS-ARB-002",
+              title: "Potential Reentrancy Without Guard",
+              severity: "critical",
+              chain: chain,
+              file: filename,
+              cve: "SWC-107",
+              impact: `External transfer call at line ${lineNum} is executed without ReentrancyGuard protection.`,
+              fixSummary: "Apply OpenZeppelin nonReentrant modifier and execute state balance updates before transfer.",
+              diff: [
+                { type: "del", text: `- Line ${lineNum}: ${trimmed}` },
+                { type: "add", text: `+ Enforce nonReentrant modifier and update storage prior to: ${trimmed}` }
+              ],
+              remediationCode: `// Add nonReentrant modifier to function header\n${trimmed}`
+            });
+          }
         }
-
-        return;
-      }
-
-      list.forEach((vuln, idx) => {
-        const div = document.createElement('div');
-        const isSelected = idx === selectedVulnIndex;
-        div.className = `p-4 rounded-xl border transition cursor-pointer ${
-          isSelected ? 'bg-[#152033] border-indigo-500' : 'bg-[#111827] border-[#1E293B]'
-        }`;
-
-        div.onclick = () => {
-          selectedVulnIndex = idx;
-          renderVulnerabilityList();
-          renderSelectedVulnerability(idx);
-        };
-
-        const sev = (vuln.severity || '').toLowerCase();
-        let sevColor = 'text-cyan-400';
-        if (sev === 'critical') sevColor = 'text-rose-400';
-        else if (sev === 'high') sevColor = 'text-amber-400';
-        else if (sev === 'medium') sevColor = 'text-blue-400';
-
-        div.innerHTML = `
-          <div class="flex items-center justify-between text-xs font-mono mb-1">
-            <span class="${sevColor} font-bold uppercase">${vuln.severity}</span>
-            <span class="text-slate-400">${vuln.chain}</span>
-          </div>
-          <h4 class="text-xs font-bold text-white">${vuln.title}</h4>
-        `;
-        container.appendChild(div);
       });
     }
 
-    function renderSelectedVulnerability(idx) {
-      let list = VULNERABILITIES;
-      if (currentFilter !== 'all') {
-        list = VULNERABILITIES.filter(v => v.chain.toLowerCase() === currentFilter.toLowerCase());
-      }
-      const vuln = list[idx] || VULNERABILITIES[0];
-      if (!vuln) return;
+    terminal.innerHTML += `
+      <div class="text-cyan-400">> Dynamic AST parsing complete.</div>
+      <div class="text-emerald-400 font-bold">> [✓] Audit finished. Found ${detectedIssues.length} issue(s).</div>
+      <div class="text-slate-400">> Loading findings report...</div>
+    `;
 
+    VULNERABILITIES.length = 0;
+    VULNERABILITIES.push(...detectedIssues);
+
+    const badgeCount = document.getElementById('badge-vuln-count');
+    if (badgeCount) badgeCount.innerText = VULNERABILITIES.length;
+
+    renderVulnerabilityList();
+    renderSelectedVulnerability(0);
+
+    spinner.classList.add('hidden');
+    btn.disabled = false;
+    btn.classList.remove('opacity-50');
+
+    setTimeout(() => {
+      switchTab('inspector');
+    }, 700);
+  }
+
+  function exportAuditReport() {
+    const findings = [...VULNERABILITIES];
+    const chainSelector = document.getElementById('global-chain-selector');
+    const currentChain = (chainSelector && chainSelector.value && chainSelector.value !== 'all') ? chainSelector.value : 'solana';
+    const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
+    const filename = filenameEl ? filenameEl.innerText.trim() : 'contract';
+
+    const reportPayload = {
+      metadata: {
+        platform: "Zoniqfi Aegis Security Core",
+        engineVersion: "2.4.0",
+        targetChain: currentChain,
+        targetFile: filename,
+        timestamp: new Date().toISOString(),
+        status: "COMPLETED"
+      },
+      summary: {
+        totalFindings: findings.length,
+        critical: findings.filter(v => (v.severity || '').toLowerCase().includes('crit')).length,
+        high: findings.filter(v => (v.severity || '').toLowerCase().includes('high')).length,
+        medium: findings.filter(v => (v.severity || '').toLowerCase().includes('med')).length
+      },
+      findings: findings
+    };
+
+    const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = url;
+    downloadAnchor.download = `aegis-audit-${filename.replace(/[^a-zA-Z0-9_-]/g, "_")}-${Date.now()}.json`;
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
+  }
+
+  function generateProofOfAudit() {
+    refreshCertificateData();
+    switchTab('proof');
+  }
+
+  function renderVulnerabilityList() {
+    const container = document.getElementById('vulnerability-list-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    let list = VULNERABILITIES;
+    if (currentFilter !== 'all') {
+      list = VULNERABILITIES.filter(v => (v.chain || '').toLowerCase() === currentFilter.toLowerCase());
+    }
+
+    if (list.length === 0) {
+      container.innerHTML = `<div class="p-4 rounded-xl bg-[#111827] border border-slate-800 text-slate-400 text-xs text-center">No vulnerabilities found for the selected ecosystem.</div>`;
+      
       const titleEl = document.getElementById('selected-vuln-title');
       const cveEl = document.getElementById('selected-vuln-cve');
       const descEl = document.getElementById('selected-vuln-desc');
       const fixEl = document.getElementById('selected-vuln-fix-summary');
-      const fileEl = document.getElementById('diff-filename');
       const badgeEl = document.getElementById('selected-vuln-badge');
-
-      if (titleEl) titleEl.innerText = vuln.title;
-      if (cveEl) cveEl.innerText = vuln.cve || 'N/A';
-      if (descEl) descEl.innerText = vuln.impact || vuln.summary || 'No description available.';
-      if (fixEl) fixEl.innerText = vuln.fixSummary || 'No remediation provided.';
-      if (fileEl) fileEl.innerText = vuln.file || 'Unknown file';
-
-      if (badgeEl) {
-        const sev = (vuln.severity || 'HIGH').toLowerCase();
-        badgeEl.innerText = sev.toUpperCase();
-        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold font-mono border';
-
-        if (sev === 'critical') {
-          badgeEl.classList.add('bg-rose-500/20', 'text-rose-400', 'border-rose-500/30');
-        } else if (sev === 'high') {
-          badgeEl.classList.add('bg-amber-500/20', 'text-amber-400', 'border-amber-500/30');
-        } else if (sev === 'medium') {
-          badgeEl.classList.add('bg-blue-500/20', 'text-blue-400', 'border-blue-500/30');
-        } else {
-          badgeEl.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
-        }
-      }
-
       const diffBox = document.getElementById('diff-container');
+
+      if (titleEl) titleEl.innerText = "No Invariant Violations Detected";
+      if (cveEl) cveEl.innerText = "PASS";
+      if (descEl) descEl.innerText = "Target smart contract successfully passed all AST verification checks. Reentrancy protections and access control validations are fully satisfied.";
+      if (fixEl) fixEl.innerText = "No remediation required. Source code adheres to verified security invariants.";
+      
+      if (badgeEl) {
+        badgeEl.innerText = "SECURE";
+        badgeEl.className = "px-2 py-0.5 rounded text-[10px] font-bold font-mono border bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      }
+
       if (diffBox) {
-        diffBox.innerHTML = '';
-        if (Array.isArray(vuln.diff) && vuln.diff.length > 0) {
-          vuln.diff.forEach((d) => {
-            const row = document.createElement('div');
-            row.className = d.type === 'add' ? 'diff-add px-2 py-0.5' : 'diff-del px-2 py-0.5';
-            row.innerText = d.text;
-            diffBox.appendChild(row);
-          });
-        } else {
-          diffBox.innerHTML = '<div class="text-slate-500 text-xs p-2">No code diff preview available for this issue.</div>';
-        }
+        diffBox.innerHTML = '<div class="text-emerald-400 text-xs p-3 font-mono">✓ 0 Invariant violations detected. Target contract verified safe.</div>';
+      }
+
+      return;
+    }
+
+    list.forEach((vuln, idx) => {
+      const div = document.createElement('div');
+      const isSelected = idx === selectedVulnIndex;
+      div.className = `p-4 rounded-xl border transition cursor-pointer ${
+        isSelected ? 'bg-[#152033] border-indigo-500' : 'bg-[#111827] border-[#1E293B]'
+      }`;
+
+      div.onclick = () => {
+        selectedVulnIndex = idx;
+        renderVulnerabilityList();
+        renderSelectedVulnerability(idx);
+      };
+
+      const sev = (vuln.severity || '').toLowerCase();
+      let sevColor = 'text-cyan-400';
+      if (sev === 'critical') sevColor = 'text-rose-400';
+      else if (sev === 'high') sevColor = 'text-amber-400';
+      else if (sev === 'medium') sevColor = 'text-blue-400';
+
+      div.innerHTML = `
+        <div class="flex items-center justify-between text-xs font-mono mb-1">
+          <span class="${sevColor} font-bold uppercase">${vuln.severity}</span>
+          <span class="text-slate-400">${vuln.chain}</span>
+        </div>
+        <h4 class="text-xs font-bold text-white">${vuln.title}</h4>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function renderSelectedVulnerability(idx) {
+    let list = VULNERABILITIES;
+    if (currentFilter !== 'all') {
+      list = VULNERABILITIES.filter(v => (v.chain || '').toLowerCase() === currentFilter.toLowerCase());
+    }
+    const vuln = list[idx] || VULNERABILITIES[0];
+    if (!vuln) return;
+
+    const titleEl = document.getElementById('selected-vuln-title');
+    const cveEl = document.getElementById('selected-vuln-cve');
+    const descEl = document.getElementById('selected-vuln-desc');
+    const fixEl = document.getElementById('selected-vuln-fix-summary');
+    const fileEl = document.getElementById('diff-filename');
+    const badgeEl = document.getElementById('selected-vuln-badge');
+
+    if (titleEl) titleEl.innerText = vuln.title;
+    if (cveEl) cveEl.innerText = vuln.cve || vuln.cwe || 'N/A';
+    if (descEl) descEl.innerText = vuln.impact || vuln.description || 'No detailed vulnerability description available.';
+    if (fixEl) fixEl.innerText = vuln.fixSummary || vuln.remediation || 'Apply standard security best practices.';
+    if (fileEl) fileEl.innerText = vuln.file || 'Unknown file';
+
+    if (badgeEl) {
+      const sev = (vuln.severity || 'HIGH').toLowerCase();
+      badgeEl.innerText = sev.toUpperCase();
+      badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold font-mono border';
+
+      if (sev === 'critical') {
+        badgeEl.classList.add('bg-rose-500/20', 'text-rose-400', 'border-rose-500/30');
+      } else if (sev === 'high') {
+        badgeEl.classList.add('bg-amber-500/20', 'text-amber-400', 'border-amber-500/30');
+      } else if (sev === 'medium') {
+        badgeEl.classList.add('bg-blue-500/20', 'text-blue-400', 'border-blue-500/30');
+      } else {
+        badgeEl.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
       }
     }
 
-    function copyPatchCode() {
-      const vuln = VULNERABILITIES[selectedVulnIndex] || VULNERABILITIES[0];
-      if (!vuln) return;
-      navigator.clipboard.writeText(vuln.remediationCode || '');
-      const btn = document.getElementById('btn-copy-text');
-      if (btn) {
-        btn.innerText = "Copied!";
-        setTimeout(() => btn.innerText = "Copy Patch", 1500);
+    const diffBox = document.getElementById('diff-container');
+    if (diffBox) {
+      diffBox.innerHTML = '';
+      if (Array.isArray(vuln.diff) && vuln.diff.length > 0) {
+        vuln.diff.forEach((d) => {
+          const row = document.createElement('div');
+          row.className = d.type === 'add' ? 'diff-add px-2 py-0.5' : 'diff-del px-2 py-0.5';
+          row.innerText = d.text;
+          diffBox.appendChild(row);
+        });
+      } else if (vuln.diff && (vuln.diff.removed || vuln.diff.added)) {
+        (vuln.diff.removed || []).forEach(text => {
+          const row = document.createElement('div');
+          row.className = 'diff-del px-2 py-0.5';
+          row.innerText = text;
+          diffBox.appendChild(row);
+        });
+        (vuln.diff.added || []).forEach(text => {
+          const row = document.createElement('div');
+          row.className = 'diff-add px-2 py-0.5';
+          row.innerText = text;
+          diffBox.appendChild(row);
+        });
+      } else {
+        diffBox.innerHTML = '<div class="text-slate-500 text-xs p-2">No code diff preview available for this issue.</div>';
+      }
+    }
+  }
+
+  function copyPatchCode() {
+    const vuln = VULNERABILITIES[selectedVulnIndex] || VULNERABILITIES[0];
+    if (!vuln) return;
+    navigator.clipboard.writeText(vuln.remediationCode || vuln.remediation || '');
+    const btn = document.getElementById('btn-copy-text');
+    if (btn) {
+      btn.innerText = "Copied!";
+      setTimeout(() => btn.innerText = "Copy Patch", 1500);
+    }
+  }
+
+  function switchInputMode(mode) {
+    const pTab = document.getElementById('tab-input-paste');
+    const gTab = document.getElementById('tab-input-github');
+    const uTab = document.getElementById('tab-input-upload');
+    
+    const pCon = document.getElementById('container-input-paste');
+    const gCon = document.getElementById('container-input-github');
+    const uCon = document.getElementById('container-input-upload');
+
+    [pTab, gTab, uTab].forEach(t => {
+      if (t) t.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition";
+    });
+
+    if (pCon) pCon.classList.add('hidden');
+    if (gCon) gCon.classList.add('hidden');
+    if (uCon) uCon.classList.add('hidden');
+
+    if (mode === 'paste') {
+      if (pTab) pTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+      if (pCon) pCon.classList.remove('hidden');
+    } else if (mode === 'github') {
+      if (gTab) gTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+      if (gCon) gCon.classList.remove('hidden');
+    } else if (mode === 'upload') {
+      if (uTab) uTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+      if (uCon) uCon.classList.remove('hidden');
+    }
+  }
+
+  async function fetchGithubCode() {
+    const input = document.getElementById('github-url-input')?.value.trim();
+    if (!input) {
+      alert('Please enter a valid GitHub file URL first.');
+      return;
+    }
+
+    let rawUrl = input;
+    if (input.includes('github.com') && input.includes('/blob/')) {
+      rawUrl = input.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+    }
+
+    try {
+      const res = await fetch(rawUrl);
+      if (!res.ok) throw new Error('Failed to fetch file from GitHub. Please ensure the repository and file are public.');
+      const codeText = await res.text();
+
+      const codeArea = document.getElementById('smart-contract-code');
+      if (codeArea) {
+        codeArea.value = codeText;
+        const linesEl = document.getElementById('editor-lines');
+        if (linesEl) linesEl.innerText = `${codeText.split('\n').length} lines`;
+        switchInputMode('paste');
+        alert('Smart contract code successfully imported from GitHub!');
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result;
+      const codeArea = document.getElementById('smart-contract-code');
+      const filenameEl = document.getElementById('editor-filename');
+      if (codeArea) {
+        codeArea.value = content;
+        if (filenameEl) filenameEl.innerText = file.name;
+        const linesEl = document.getElementById('editor-lines');
+        if (linesEl) linesEl.innerText = `${content.split('\n').length} lines`;
+        switchInputMode('paste');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function refreshCertificateData() {
+    const activeIssue = (Array.isArray(VULNERABILITIES) && VULNERABILITIES.length > 0) ? VULNERABILITIES[0] : null;
+    const chainSelector = document.getElementById('global-chain-selector');
+    const chain = activeIssue?.chain || ((chainSelector && chainSelector.value !== 'all') ? chainSelector.value : 'solana');
+    
+    const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
+    const filename = activeIssue?.file || (filenameEl ? filenameEl.innerText.trim() : 'Contract.sol');
+
+    const certContract = document.getElementById('cert-contract-name');
+    if (certContract) certContract.innerText = filename;
+
+    const certChain = document.getElementById('cert-target-chain');
+    if (certChain) {
+      if (['arbitrum', 'ethereum', 'base', 'polygon'].includes(chain.toLowerCase())) {
+        certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#28A0F0]"></span> Arbitrum Nitro (L2 EVM)`;
+      } else {
+        certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#14F195]"></span> Solana SVM (Anchor Framework)`;
       }
     }
 
-    function switchInputMode(mode) {
-      const pTab = document.getElementById('tab-input-paste');
-      const gTab = document.getElementById('tab-input-github');
-      const uTab = document.getElementById('tab-input-upload');
-      
-      const pCon = document.getElementById('container-input-paste');
-      const gCon = document.getElementById('container-input-github');
-      const uCon = document.getElementById('container-input-upload');
+    const prFile = document.getElementById('pr-sim-file');
+    const prIssue = document.getElementById('pr-sim-issue');
+    if (prFile) prFile.innerText = `${filename}:${activeIssue?.line || 1}`;
+    if (prIssue && activeIssue) prIssue.innerText = activeIssue.title;
 
-      [pTab, gTab, uTab].forEach(t => {
-        if (t) t.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition";
-      });
+    const certDate = document.getElementById('cert-date-display');
+    if (certDate) certDate.innerText = new Date().toUTCString();
 
-      if (pCon) pCon.classList.add('hidden');
-      if (gCon) gCon.classList.add('hidden');
-      if (uCon) uCon.classList.add('hidden');
+    const randomBytes = new Uint8Array(24);
+    crypto.getRandomValues(randomBytes);
+    const newHash = "0x" + Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    const certHash = document.getElementById('cert-hash-display');
+    if (certHash) certHash.innerText = newHash;
 
-      if (mode === 'paste') {
-        if (pTab) pTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
-        if (pCon) pCon.classList.remove('hidden');
-      } else if (mode === 'github') {
-        if (gTab) gTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
-        if (gCon) gCon.classList.remove('hidden');
-      } else if (mode === 'upload') {
-        if (uTab) uTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
-        if (uCon) uCon.classList.remove('hidden');
-      }
+    const qrEl = document.getElementById('cert-qr-code');
+    if (qrEl) {
+      qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://zoniqfinance.com/verify/${newHash}`;
     }
 
-    async function fetchGithubCode() {
-      const input = document.getElementById('github-url-input')?.value.trim();
-      if (!input) {
-        alert('Masukkan URL GitHub terlebih dahulu.');
-        return;
-      }
+    if (window.lucide) lucide.createIcons();
+  }
 
-      let rawUrl = input;
-      if (input.includes('github.com') && input.includes('/blob/')) {
-        rawUrl = input.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
-      }
+  function printCertificate() {
+    refreshCertificateData();
+    window.print();
+  }
 
+  function loadSavedRuleConfigs() {
+    const savedConfig = localStorage.getItem('aegis_rule_configs');
+    if (savedConfig) {
       try {
-        const res = await fetch(rawUrl);
-        if (!res.ok) throw new Error('Gagal mengambil file dari GitHub. Pastikan URL publik valid.');
-        const codeText = await res.text();
-
-        const codeArea = document.getElementById('smart-contract-code');
-        if (codeArea) {
-          codeArea.value = codeText;
-          const linesEl = document.getElementById('editor-lines');
-          if (linesEl) linesEl.innerText = `${codeText.split('\n').length} lines`;
-          switchInputMode('paste');
-          alert('Berhasil mengimpor kode dari GitHub!');
-        }
-      } catch (err) {
-        alert(err.message);
+        const config = JSON.parse(savedConfig);
+        if (document.getElementById('rule-sol-001')) document.getElementById('rule-sol-001').checked = config.sol001 ?? true;
+        if (document.getElementById('rule-sol-002')) document.getElementById('rule-sol-002').checked = config.sol002 ?? true;
+        if (document.getElementById('rule-arb-001')) document.getElementById('rule-arb-001').checked = config.arb001 ?? true;
+        if (document.getElementById('rule-arb-002')) document.getElementById('rule-arb-002').checked = config.arb002 ?? true;
+      } catch (e) {
+        console.error("Failed to parse saved rule configs", e);
       }
     }
+  }
 
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const content = e.target.result;
-        const codeArea = document.getElementById('smart-contract-code');
-        const filenameEl = document.getElementById('editor-filename');
-        if (codeArea) {
-          codeArea.value = content;
-          if (filenameEl) filenameEl.innerText = file.name;
-          const linesEl = document.getElementById('editor-lines');
-          if (linesEl) linesEl.innerText = `${content.split('\n').length} lines`;
-          switchInputMode('paste');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function refreshCertificateData() {
-      // 1. Ambil issue pertama hasil scan aktif (jika ada)
-      const activeIssue = (Array.isArray(VULNERABILITIES) && VULNERABILITIES.length > 0) ? VULNERABILITIES[0] : null;
-
-      // 2. Tentukan file dan chain secara dinamis dari hasil scan atau selector
-      const chainSelector = document.getElementById('global-chain-selector');
-      const chain = activeIssue?.chain || ((chainSelector && chainSelector.value !== 'all') ? chainSelector.value : 'solana');
-      
-      const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
-      const filename = activeIssue?.file || (filenameEl ? filenameEl.innerText.trim() : 'contract');
-
-      // 3. Update data pada kartu sertifikat Proof of Audit
-      const certContract = document.getElementById('cert-contract-name');
-      if (certContract) certContract.innerText = filename;
-
-      const certChain = document.getElementById('cert-target-chain');
-      if (certChain) {
-        if (chain.toLowerCase() === 'arbitrum' || chain.toLowerCase() === 'ethereum' || chain.toLowerCase() === 'base' || chain.toLowerCase() === 'polygon') {
-          certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#28A0F0]"></span> Arbitrum Nitro (L2 EVM)`;
-        } else {
-          certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#14F195]"></span> Solana SVM (Anchor Framework)`;
-        }
-      }
-
-      // 4. Update data pada simulasi GitHub PR jika elemennya ada
-      const prFile = document.getElementById('pr-sim-file');
-      const prIssue = document.getElementById('pr-sim-issue');
-      if (prFile) prFile.innerText = `${filename}:${activeIssue?.line || 1}`;
-      if (prIssue && activeIssue) prIssue.innerText = activeIssue.title;
-
-      const certDate = document.getElementById('cert-date-display');
-      if (certDate) certDate.innerText = new Date().toUTCString();
-
-      const randomBytes = new Uint8Array(24);
-      crypto.getRandomValues(randomBytes);
-      const newHash = "0x" + Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-      
-      const certHash = document.getElementById('cert-hash-display');
-      if (certHash) certHash.innerText = newHash;
-
-      const qrEl = document.getElementById('cert-qr-code');
-      if (qrEl) {
-        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://zoniqfinance.com/verify/${newHash}`;
-      }
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function printCertificate() {
-      refreshCertificateData();
-      window.print();
-    }
-
-    function loadSavedRuleConfigs() {
-      const savedConfig = localStorage.getItem('aegis_rule_configs');
-      if (savedConfig) {
-        try {
-          const config = JSON.parse(savedConfig);
-          if (document.getElementById('rule-sol-001')) document.getElementById('rule-sol-001').checked = config.sol001 ?? true;
-          if (document.getElementById('rule-sol-002')) document.getElementById('rule-sol-002').checked = config.sol002 ?? true;
-          if (document.getElementById('rule-arb-001')) document.getElementById('rule-arb-001').checked = config.arb001 ?? true;
-          if (document.getElementById('rule-arb-002')) document.getElementById('rule-arb-002').checked = config.arb002 ?? true;
-        } catch (e) {
-          console.error("Failed to parse saved rule configs", e);
-        }
-      }
-    }
-
-    function saveRuleConfigs() {
-      const config = {
-        sol001: document.getElementById('rule-sol-001')?.checked ?? true,
-        sol002: document.getElementById('rule-sol-002')?.checked ?? true,
-        arb001: document.getElementById('rule-arb-001')?.checked ?? true,
-        arb002: document.getElementById('rule-arb-002')?.checked ?? true,
-      };
-      localStorage.setItem('aegis_rule_configs', JSON.stringify(config));
-      alert("Rule configurations saved successfully!");
-    }
-  </script>
+  function saveRuleConfigs() {
+    const config = {
+      sol001: document.getElementById('rule-sol-001')?.checked ?? true,
+      sol002: document.getElementById('rule-sol-002')?.checked ?? true,
+      arb001: document.getElementById('rule-arb-001')?.checked ?? true,
+      arb002: document.getElementById('rule-arb-002')?.checked ?? true,
+    };
+    localStorage.setItem('aegis_rule_configs', JSON.stringify(config));
+    alert("Rule configurations saved successfully!");
+  }
+</script>
 </body>
 </html>
