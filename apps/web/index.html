@@ -892,9 +892,12 @@ pub mod zoniq_vault {
 
 #[derive(Accounts)]
 pub struct WithdrawTreasury<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        has_one = authority @ ErrorCode::Unauthorized
+    )]
     pub vault: Account<'info, VaultData>,
-    pub authority: AccountInfo<'info>, // Missing Signer!
+    pub authority: Signer<'info>,
     #[account(mut)]
     pub recipient: AccountInfo<'info>,
 }
