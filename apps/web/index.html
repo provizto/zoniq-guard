@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoniqfi Aegis | Automated Smart Contract Security & Code Auditing</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              solana: '#14F195',
+              arbitrum: '#28A0F0',
+              base: '#0052FF',
+              polygon: '#8247E5',
+              primary: '#6366F1',
+              dark: '#0B0F17',
+              panel: '#111827',
+              card: '#161F30',
+              border: '#1F2E45'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0B0F17; }
+    ::-webkit-scrollbar-thumb { background: #1F2E45; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #374151; }
+
+    .diff-del {
+      background-color: rgba(239, 68, 68, 0.15);
+      border-left: 3px solid #ef4444;
+      color: #fca5a5;
+    }
+    .diff-add {
+      background-color: rgba(16, 185, 129, 0.15);
+      border-left: 3px solid #10b981;
+      color: #86efac;
+    }
+    .code-gutter {
+      user-select: none;
+      color: #4b5563;
+      text-align: right;
+      padding-right: 1rem;
+      min-width: 2.5rem;
+    }
+
+    /* Aturan format cetak & export PDF sertifikat */
+  @media print {
+    body {
+      background: #0B0F17 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    aside, header, .no-print {
+      display: none !important;
+    }
+    #audit-certificate-card {
+      border-width: 1px !important;
+      box-shadow: none !important;
+    }
+  }
+  </style>
+</head>
+
+<body class="bg-[#0B0F17] text-slate-100 font-sans antialiased h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar" class="w-64 bg-[#0E1524] border-r border-[#1B273F] flex flex-col justify-between shrink-0 transition-all duration-300 z-30">
+    <div>
+      <!-- Brand Logo Header -->
+      <div class="h-16 flex items-center px-5 border-b border-[#1B273F] gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+          <i data-lucide="shield-check" class="w-5 h-5 text-white stroke-[2.2]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold tracking-tight text-white text-base">AEGIS</span>
+            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold">Core v2.4</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium">Zoniqfi Security Suite</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-3 space-y-1 text-sm font-medium">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-white bg-indigo-600/15 border border-indigo-500/30 font-semibold transition-all">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo-400"></i>
+          <span>Overview</span>
+        </button>
+
+        <button onclick="switchTab('scanner')" id="nav-scanner" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+          <div class="flex items-center gap-3">
+            <i data-lucide="scan-eye" class="w-4 h-4"></i>
+            <span>Audit Scanner</span>
+          </div>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono">Live</span>
+        </button>
+
+        <button onclick="switchTab('inspector')" id="nav-inspector" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+          <div class="flex items-center gap-3">
+            <i data-lucide="bug" class="w-4 h-4"></i>
+            <span>Vulnerabilities</span>
+          </div>
+          <span id="badge-vuln-count" class="text-xs bg-rose-500/20 text-rose-400 font-mono px-2 py-0.5 rounded-full">4</span>
+        </button>
+
+        <button onclick="switchTab('cicd')" id="nav-cicd" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+          <i data-lucide="git-pull-request" class="w-4 h-4"></i>
+          <span>CI/CD & GitHub</span>
+        </button>
+
+        <button onclick="switchTab('proof')" id="nav-proof" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>Proof of Audit</span>
+        </button>
+
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>Rule Config</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Bottom: Network Monitor & Quota -->
+    <div class="p-3 border-t border-[#1B273F] space-y-3 bg-[#0B101C]/70">
+      <div class="bg-[#131C2E] p-2.5 rounded-lg border border-[#1E2E48] text-xs">
+        <div class="flex items-center justify-between text-slate-400 mb-1.5">
+          <span class="font-medium text-[11px] uppercase tracking-wider">Engine Nodes</span>
+          <span class="flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Optimal
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800">
+          <span class="text-slate-300 font-mono">Anchor v0.30.1</span>
+          <span class="text-indigo-400 font-mono">Solc 0.8.26</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between px-2 text-xs">
+        <span class="text-slate-400">Scan Credits:</span>
+        <span id="credit-count" class="font-mono font-bold text-slate-200">84 / 100</span>
+      </div>
+      <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full w-[84%]"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT WRAPPER -->
+  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    
+    <!-- TOP HEADER -->
+    <header class="h-16 bg-[#0E1524] border-b border-[#1B273F] flex items-center justify-between px-6 shrink-0 z-20">
+      <!-- Workspace selector & Multi-Chain Dropdown -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141E33] border border-[#21304D] text-xs font-semibold text-slate-200">
+          <div class="w-5 h-5 rounded bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold">Z</div>
+          <span>Zoniqfi Digital Core Labs</span>
+        </div>
+        
+        <span class="text-slate-600 text-sm">/</span>
+
+        <!-- Extended Multi-Chain Selector Dropdown -->
+        <div class="relative">
+          <select id="global-chain-selector" onchange="handleChainChange(this.value)" class="bg-[#141E33] border border-[#21304D] text-xs rounded-lg px-3 py-1.5 font-medium text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
+            <option value="all">⚡ Multi-Chain Analysis</option>
+            <option value="solana">🟢 Solana (SVM Anchor)</option>
+            <option value="arbitrum">🔵 Arbitrum Nitro (L2 EVM)</option>
+            <option value="base">🔵 Base (OP Stack)</option>
+            <option value="polygon">🟣 Polygon PoS</option>
+            <option value="ethereum">⚪ Ethereum Mainnet</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Utilities & Profile / Login Button -->
+      <div class="flex items-center gap-3">
+        <button onclick="switchTab('scanner')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all">
+          <i data-lucide="zap" class="w-3.5 h-3.5 fill-current"></i>
+          <span>Launch Audit</span>
+        </button>
+
+        <div class="h-6 w-px bg-slate-800 mx-1"></div>
+
+        <!-- AUTH CONTAINER: Dynamically switches between Login Button and User Avatar -->
+        <div id="auth-container">
+          <!-- Unauthenticated State Button -->
+          <button id="btn-login-trigger" onclick="openLoginModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition">
+            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+            <span>Connect / Sign In</span>
+          </button>
+
+          <!-- Authenticated State Pill (Hidden by default) -->
+          <div id="user-profile-pill" class="hidden relative group">
+            <div class="flex items-center gap-2.5 pl-1 pr-3 py-1 bg-[#141E33] border border-[#21304D] rounded-full cursor-pointer">
+              <div id="user-avatar-badge" class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-500 text-[10px] font-bold flex items-center justify-center text-white">ZF</div>
+              <div class="text-left">
+                <span id="user-display-name" class="text-xs font-semibold block leading-tight text-slate-200 font-mono">0x7a...4b12</span>
+              </div>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="absolute right-0 mt-2 w-48 bg-[#141E33] border border-[#21304D] rounded-xl shadow-2xl p-1 hidden group-hover:block">
+              <div class="px-3 py-2 border-b border-slate-800 text-[11px] text-slate-400">
+                Connected as <strong id="user-role" class="text-white">Pro Auditor</strong>
+              </div>
+              <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg flex items-center gap-2 mt-1">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- VIEWS -->
+    <main class="flex-1 overflow-y-auto bg-[#0B0F17] p-6 text-slate-200" id="main-viewport">
+
+      <!-- ================= PAGE 1: DASHBOARD OVERVIEW ================= -->
+      <div id="page-dashboard" class="space-y-6 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#121A2E] via-[#10192A] to-[#15172C] p-6 rounded-2xl border border-[#1E2C48] relative overflow-hidden shadow-xl">
+          <div class="relative z-10">
+            <div class="flex items-center gap-2 text-xs font-mono text-indigo-400 mb-1">
+              <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+              HYBRID SECURITY ENGINE ACTIVE
+            </div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Decentralized Protocol Security Dashboard</h1>
+            <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+              Real-time threat detection for <span class="text-[#14F195] font-semibold">Solana Anchor</span> and <span class="text-[#28A0F0] font-semibold">Arbitrum Nitro/EVM</span> smart contracts.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 relative z-10">
+            <button onclick="switchTab('scanner')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold tracking-wide flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition">
+              <i data-lucide="shield-alert" class="w-4 h-4"></i> Run Smart Audit
+            </button>
+            <button onclick="triggerSampleAudit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 transition">
+              <i data-lucide="play" class="w-4 h-4 text-emerald-400"></i> Load Demo Contract
+            </button>
+          </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-[#111827] border border-[#1E293B] rounded-xl p-4">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-medium">
+              <span>Avg. Security Rating</span>
+              <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-bold font-mono text-emerald-400">91.4</span>
+              <span class="text-xs text-slate-400 font-mono">/ 100</span>
+            </div>
+          </div>
+
+          <div class="bg-[#111827] border border-[#1E293B] rounded-xl p-4">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-medium">
+              <span>Critical / High Flaws</span>
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-bold font-mono text-rose-400">2</span>
+              <span class="text-xs text-slate-400 font-mono">Active Risks</span>
+            </div>
+          </div>
+
+          <div class="bg-[#111827] border border-[#1E293B] rounded-xl p-4">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-medium">
+              <span>Audited Programs</span>
+              <i data-lucide="file-code" class="w-4 h-4 text-cyan-400"></i>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-bold font-mono text-slate-100">48</span>
+              <span class="text-xs text-slate-400 font-mono">Solana & EVM</span>
+            </div>
+          </div>
+
+          <div class="bg-[#111827] border border-[#1E293B] rounded-xl p-4">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-medium">
+              <span>Gas & Compute Saved</span>
+              <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-bold font-mono text-amber-400">38.5%</span>
+              <span class="text-xs text-slate-400 font-mono">Optimization</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PAGE 2: AUDIT SCANNER HUB ================= -->
+      <div id="page-scanner" class="hidden space-y-6 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-white">Smart Contract Security Scanner</h1>
+            <p class="text-xs text-slate-400">Upload code, link GitHub repository, or paste raw smart contract source.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadTemplate('solana')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#14F195] border border-[#14F195]/30 font-medium transition">
+              Load Solana (Anchor)
+            </button>
+            <button onclick="loadTemplate('arbitrum')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#28A0F0] border border-[#28A0F0]/30 font-medium transition">
+              Load Arbitrum (Solidity)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Input Mode Navigation Tabs -->
+            <div class="flex items-center justify-between bg-[#111827] p-1.5 rounded-xl border border-[#1E293B]">
+              <div class="flex items-center gap-1.5">
+                <button type="button" id="tab-input-paste" onclick="switchInputMode('paste')" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition">
+                  Paste Code
+                </button>
+                <button type="button" id="tab-input-github" onclick="switchInputMode('github')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+                  GitHub URL
+                </button>
+                <button type="button" id="tab-input-upload" onclick="switchInputMode('upload')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition">
+                  Upload File
+                </button>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono pr-2">Multi-Input Mode</span>
+            </div>
+
+            <!-- Container 1: Raw Code Paste Editor -->
+            <div id="container-input-paste" class="bg-[#111827] border border-[#1E293B] rounded-2xl overflow-hidden shadow-xl">
+              <div class="bg-[#161F30] px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 font-mono">
+                  <span id="editor-filename" class="text-slate-300">zoniq_vault.rs</span>
+                </div>
+                <div class="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                  <span id="editor-lines">46 lines</span>
+                  <span>UTF-8</span>
+                </div>
+              </div>
+
+              <textarea id="smart-contract-code" rows="16" class="w-full bg-[#0B0F17] text-slate-200 font-mono text-xs p-4 focus:outline-none resize-none leading-relaxed border-0" spellcheck="false"></textarea>
+
+              <div class="bg-[#161F30] px-4 py-2.5 border-t border-[#1E293B] flex items-center justify-between">
+                <span class="text-xs text-slate-400 font-medium">Ready for Static & Invariant Analysis</span>
+                <button onclick="startAuditScan()" id="btn-start-scan" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold tracking-wide shadow-md flex items-center gap-2 transition">
+                  <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Start Deep Scan
+                </button>
+              </div>
+            </div>
+
+            <!-- Container 2: GitHub Repo URL Input -->
+            <div id="container-input-github" class="hidden bg-[#111827] border border-[#1E293B] rounded-2xl p-6 shadow-xl space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Public GitHub Contract URL</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="github-url-input" placeholder="https://github.com/org/repo/blob/main/contracts/Vault.sol" 
+                    class="w-full bg-[#0B0F17] border border-[#1E293B] rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono">
+                  <button type="button" onclick="fetchGithubCode()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-2">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Fetch
+                  </button>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-400">Supports single smart contract files (.sol or .rs) from public GitHub repositories.</p>
+            </div>
+
+            <!-- Container 3: File Upload Dropzone -->
+            <div id="container-input-upload" class="hidden bg-[#111827] border-2 border-dashed border-[#1E293B] hover:border-indigo-500/50 rounded-2xl p-8 text-center space-y-2 cursor-pointer transition shadow-xl" onclick="document.getElementById('file-upload-input').click()">
+              <input type="file" id="file-upload-input" class="hidden" accept=".sol,.rs" onchange="handleFileUpload(event)">
+              <i data-lucide="upload-cloud" class="w-8 h-8 text-indigo-400 mx-auto"></i>
+              <p class="text-xs font-medium text-slate-200">Click to upload smart contract file (.sol or .rs)</p>
+              <p class="text-[11px] text-slate-500">Maximum file size: 2MB</p>
+            </div>
+
+          </div>
+
+          <div class="lg:col-span-5 space-y-4">
+            <div class="bg-[#0B0F17] border border-[#1E293B] rounded-2xl overflow-hidden shadow-xl">
+              <div class="bg-[#121A2B] px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 font-mono text-slate-300">
+                  <i data-lucide="terminal" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  <span>Scanner Execution Pipeline</span>
+                </div>
+                <div id="scan-spinner" class="hidden flex items-center gap-1.5 text-[11px] text-indigo-400 font-mono">
+                  <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Scanning...
+                </div>
+              </div>
+
+              <div id="terminal-logs" class="p-4 font-mono text-[11px] space-y-1.5 h-72 overflow-y-auto text-slate-400">
+                <div class="text-slate-500">// Aegis Security Pipeline initialized.</div>
+                <div class="text-emerald-400">> Click [Start Deep Scan] to analyze the active contract.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PAGE 3: VULNERABILITY INSPECTOR ================= -->
+      <div id="page-inspector" class="hidden space-y-6 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-white">Vulnerability Findings & Remediations</h1>
+            <p class="text-xs text-slate-400">Exploit traces and 1-click patch remediations.</p>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <button onclick="generateProofOfAudit()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs text-white rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              <span>Attest Proof</span>
+            </button>
+            <button onclick="exportAuditReport()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-[#1E293B] hover:border-slate-600 rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>Export Report</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div class="lg:col-span-5 space-y-3" id="vulnerability-list-container"></div>
+
+          <div class="lg:col-span-7 bg-[#111827] border border-[#1E293B] rounded-2xl overflow-hidden shadow-2xl sticky top-4">
+            <div class="bg-[#161F30] px-5 py-3.5 border-b border-[#1E293B] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span id="selected-vuln-badge" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono">CRITICAL</span>
+                <h3 id="selected-vuln-title" class="text-sm font-bold text-white">Issue</h3>
+              </div>
+              <span id="selected-vuln-cve" class="text-xs font-mono text-slate-400">CWE</span>
+            </div>
+
+            <div class="p-5 space-y-4">
+              <div>
+                <h4 class="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-1">Impact Analysis</h4>
+                <p id="selected-vuln-desc" class="text-xs text-slate-300 leading-relaxed"></p>
+              </div>
+
+              <div class="p-3 bg-indigo-950/30 border border-indigo-500/30 rounded-xl text-xs text-indigo-300">
+                <div class="font-semibold flex items-center gap-1.5 mb-1 text-indigo-200">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> Recommended Patch
+                </div>
+                <span id="selected-vuln-fix-summary"></span>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                    <i data-lucide="git-compare" class="w-3.5 h-3.5"></i> Line Diff Inspection
+                  </span>
+                  <button onclick="copyPatchCode()" class="text-xs text-slate-300 hover:text-white px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-md flex items-center gap-1.5 font-medium transition">
+                    <i data-lucide="copy" class="w-3 h-3"></i> <span id="btn-copy-text">Copy Patch</span>
+                  </button>
+                </div>
+
+                <div class="bg-[#0B0F17] rounded-xl border border-[#1E293B] overflow-hidden font-mono text-[11px] leading-relaxed">
+                  <div class="bg-[#121A2B] px-3 py-1.5 text-slate-400 text-[10px] border-b border-slate-800 flex justify-between">
+                    <span id="diff-filename">program.rs</span>
+                    <span>Unified Diff View</span>
+                  </div>
+                  <div id="diff-container" class="p-3 space-y-1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PAGE 4: CI/CD & GITHUB ================= -->
+      <div id="page-cicd" class="hidden space-y-6 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Automated CI/CD Security Gates</h1>
+            <p class="text-xs text-slate-400">Block vulnerable Pull Requests before deployment on Solana or Arbitrum mainnet.</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> GitHub Webhook Active
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left 6 Cols: Workflow YAML -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 shadow-xl">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-4 h-4 text-indigo-400"></i>
+                  <h3 class="text-xs font-bold text-white font-mono">.github/workflows/aegis-audit.yml</h3>
+                </div>
+                <button onclick="copyCiCdYaml()" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md font-medium transition flex items-center gap-1.5">
+                  <i data-lucide="copy" class="w-3 h-3"></i>
+                  <span id="btn-copy-yaml-text">Copy YAML</span>
+                </button>
+              </div>
+
+              <div class="bg-[#0B0F17] rounded-xl p-4 font-mono text-[11px] leading-relaxed text-slate-300 border border-[#1E293B] overflow-x-auto select-text">
+<pre><code><span class="text-purple-400">name:</span> Zoniqfi Aegis Security Gate
+<span class="text-purple-400">on:</span> [push, pull_request]
+
+<span class="text-purple-400">jobs:</span>
+  <span class="text-indigo-400">smart-contract-audit:</span>
+    <span class="text-purple-400">runs-on:</span> ubuntu-latest
+    <span class="text-purple-400">steps:</span>
+      - <span class="text-purple-400">uses:</span> actions/checkout@v4
+      - <span class="text-purple-400">name:</span> Run Aegis Multi-Chain Analyzer
+        <span class="text-purple-400">uses:</span> zoniqfi/aegis-action@v2
+        <span class="text-purple-400">with:</span>
+          <span class="text-cyan-400">api-key:</span> <span class="text-emerald-400">${{ secrets.AEGIS_API_KEY }}</span>
+          <span class="text-cyan-400">fail-on-severity:</span> <span class="text-amber-300">'CRITICAL,HIGH'</span>
+          <span class="text-cyan-400">solana-programs:</span> <span class="text-slate-400">'./programs/**/src/lib.rs'</span>
+          <span class="text-cyan-400">arbitrum-contracts:</span> <span class="text-slate-400">'./contracts/**/*.sol'</span></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 6 Cols: GitHub PR Simulation Card -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 shadow-xl">
+              <h3 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
+                <i data-lucide="git-pull-request" class="w-4 h-4 text-cyan-400"></i>
+                GitHub Pull Request Review Simulation
+              </h3>
+
+              <div class="bg-[#0E1524] border border-[#1E293B] rounded-xl p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                  <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white">A</div>
+                    <span class="text-xs font-bold text-slate-200">aegis-security-bot</span>
+                    <span class="text-[9px] font-mono bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">BOT</span>
+                  </div>
+                  <span class="text-[11px] text-slate-500 font-mono">Just now</span>
+                </div>
+
+                <div class="space-y-2.5 text-xs text-slate-300">
+                  <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2 font-semibold">
+                    <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                    <span>Merge Blocked: 1 Critical security vulnerability detected.</span>
+                  </div>
+
+                  <div class="text-[11px] text-slate-400 space-y-1">
+                    <p>Commit <code class="text-slate-200 font-mono">8f21e0b</code> failed the Aegis automated security policy gate:</p>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                      <li><strong id="pr-sim-issue" class="text-rose-400">Missing Signer Constraint</strong> found in <code id="pr-sim-file" class="font-mono text-cyan-300">zoniq_vault.rs:20</code>.</li>
+                    </ul>
+                    <p class="pt-1 text-slate-400">Apply the suggested patch in your local branch to unblock this PR.</p>
+                  </div>
+                </div>
+
+                <!-- Blocked PR Action Bar -->
+                <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <span class="text-[11px] text-rose-400 flex items-center gap-1 font-mono">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Checks failed (1/1)
+                  </span>
+                  <button disabled class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-500 text-xs font-bold cursor-not-allowed border border-slate-700">
+                    Merge Pull Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PAGE 5: PROOF OF AUDIT CERTIFICATES ================= -->
+      <div id="page-proof" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="flex items-center justify-between no-print">
+          <div>
+            <h1 class="text-2xl font-bold text-white">Cryptographic Proof of Audit</h1>
+            <p class="text-xs text-slate-400">Verifiable on-chain attestation certificate for dApp releases.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="refreshCertificateData()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400"></i> Sync Findings
+            </button>
+            <button onclick="printCertificate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition">
+              <i data-lucide="printer" class="w-4 h-4"></i> Export PDF / Print
+            </button>
+          </div>
+        </div>
+
+        <!-- Attestation Certificate Display Card -->
+        <div id="audit-certificate-card" class="bg-gradient-to-b from-[#131C30] via-[#0E1526] to-[#0A0E1A] border-2 border-[#263756] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden text-slate-200">
+          
+          <!-- Background Seal Watermark -->
+          <div class="absolute right-[-40px] bottom-[-40px] opacity-[0.03] pointer-events-none text-white">
+            <i data-lucide="shield-check" class="w-96 h-96"></i>
+          </div>
+
+          <!-- Certificate Header -->
+          <div class="flex items-start justify-between border-b border-slate-800 pb-6 relative z-10">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i data-lucide="award" class="w-7 h-7 text-white stroke-[2.2]"></i>
+              </div>
+              <div>
+                <span class="text-[11px] font-mono tracking-widest uppercase text-indigo-400 font-bold block">SECURITY ASSURANCE CERTIFICATE</span>
+                <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">PROOF OF CODE AUDIT</h2>
+                <p class="text-xs text-slate-400">Issued by Zoniqfi Aegis Deep AST Security Suite</p>
+              </div>
+            </div>
+            <div class="text-right font-mono text-xs">
+              <span class="text-slate-400 block text-[11px]">Audit Verdict</span>
+              <span id="cert-verdict-badge" class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                PASSED WITH REMEDIATION
+              </span>
+            </div>
+          </div>
+
+          <!-- Certificate Metadata Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8 text-xs relative z-10">
+            <div class="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">Smart Contract Target:</span>
+                <span id="cert-contract-name" class="font-mono text-white text-sm font-bold">zoniq_vault.rs</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">Target Ecosystem / Architecture:</span>
+                <span id="cert-target-chain" class="font-mono text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-[#14F195]"></span> Solana SVM (Anchor Framework)
+                </span>
+              </div>
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">Static AST Rule Coverage:</span>
+                <span class="font-mono text-slate-300">100% (Checks-Effects-Interactions & Signer Enforced)</span>
+              </div>
+            </div>
+
+            <div class="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">Verification Timestamp:</span>
+                <span id="cert-date-display" class="font-mono text-slate-200">Sep 19, 2026 • 22:00 UTC</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">Calculated Security Score:</span>
+                <span id="cert-score-display" class="font-mono text-emerald-400 font-bold text-sm">92.0 / 100</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block mb-0.5 font-medium">On-Chain Attestation Hash:</span>
+                <span id="cert-hash-display" class="font-mono text-indigo-300 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">
+                  0x7f29a0c3b889d1469e32a210984df9a1b429031c2e7b89d
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Cryptographic Seal & Dynamic QR Code -->
+          <div class="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+            <div class="flex items-center gap-4">
+              <!-- Verification QR Code (SVG/Canvas based) -->
+              <div class="w-16 h-16 bg-white p-1 rounded-xl shadow-md shrink-0 flex items-center justify-center">
+                <img id="cert-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://zoniqfinance.com/verify/aegis-cert" alt="Audit QR Verification" class="w-full h-full rounded-lg" />
+              </div>
+              <div class="text-xs text-slate-400 space-y-1">
+                <div class="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i>
+                  <span>Cryptographically Anchored Certificate</span>
+                </div>
+                <p class="text-[11px] leading-relaxed">
+                  Scan to verify attestation record against Solana PDA State & Arbitrum One L2 Registry.
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right font-mono text-[11px] shrink-0">
+              <span class="bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg block text-center">
+                SIGNATURE: ED25519-VERIFIED
+              </span>
+              <span class="text-slate-500 text-[10px] block mt-1">Zoniqfi Engine Node ID: #ZF-NODE-09</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================= PAGE 6: RULE CONFIG ================= -->
+      <div id="page-settings" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="flex items-center justify-between pb-4 border-b border-[#1E293B]">
+          <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Security Rule Configuration</h1>
+            <p class="text-xs text-slate-400 mt-1">Enable or toggle custom AST inspection rules for SVM & EVM analyzers.</p>
+          </div>
+          <button onclick="saveRuleConfigs()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition">
+            <i data-lucide="check" class="w-4 h-4"></i> Save Changes
+          </button>
+        </div>
+
+        <!-- Solana SVM Rule Group -->
+        <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3 h-3 rounded-full bg-[#14F195]"></span>
+              <h3 class="text-sm font-bold text-white">Solana Anchor Rules (SVM)</h3>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">2 Active Rules</span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+              <div class="pr-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-white">Missing Signer Verification</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">CRITICAL</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">Flags authority/admin accounts defined with generic <code class="text-indigo-300 font-mono">AccountInfo</code> instead of enforced <code class="text-emerald-400 font-mono">Signer</code>.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" checked class="sr-only peer" id="rule-sol-001">
+                <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+              <div class="pr-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-white">Canonical Bump Derivation</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">HIGH</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">Ensures PDA seeds definitions mandate explicit bump validation to prevent address collision exploits.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" checked class="sr-only peer" id="rule-sol-002">
+                <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arbitrum EVM Rule Group -->
+        <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3 h-3 rounded-full bg-[#28A0F0]"></span>
+              <h3 class="text-sm font-bold text-white">Arbitrum & EVM Rules (Solidity AST)</h3>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">2 Active Rules</span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+              <div class="pr-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-white">Checks-Effects-Interactions (Reentrancy Guard)</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">CRITICAL</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">Detects external token or ether transfers executed prior to storage mutations.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" checked class="sr-only peer" id="rule-arb-001">
+                <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#0B0F17] border border-[#1E293B]">
+              <div class="pr-4">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-white">Arbitrum Sequencer block.number Misalignment</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">MEDIUM</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">Warns against reliance on block.number for L2 timing logic instead of ArbSys precompiles.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" checked class="sr-only peer" id="rule-arb-002">
+                <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ================= AUTHENTICATION MODAL ================= -->
+  <div id="login-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-[#21304D] rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+          <i data-lucide="shield" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Connect to Aegis SecOps</h3>
+          <p class="text-xs text-slate-400">Choose your preferred Web3 or Web2 sign-in method</p>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="space-y-3">
+        <button onclick="loginWithWallet('phantom')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition text-xs font-semibold text-white">
+          <span class="flex items-center gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#14F195]"></span> Phantom (Solana SVM)
+          </span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+        </button>
+
+        <button onclick="loginWithWallet('metamask')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-cyan-500/50 transition text-xs font-semibold text-white">
+          <span class="flex items-center gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#28A0F0]"></span> MetaMask / Rabby (Arbitrum & EVM)
+          </span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+        </button>
+
+        <div class="flex items-center gap-3 my-4">
+          <div class="h-px flex-1 bg-slate-800"></div>
+          <span class="text-[11px] text-slate-500 font-mono uppercase">or developer oauth</span>
+          <div class="h-px flex-1 bg-slate-800"></div>
+        </div>
+
+        <button onclick="loginWithGitHub()" class="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span>Continue with GitHub</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let currentUser = null;
+    let currentTab = 'dashboard';
+    let selectedVulnIndex = 0;
+    let currentFilter = 'all';
+
+    // --- FUNCTION CI/CD: Copy Workflow YAML ---
+    function copyCiCdYaml() {
+      const yamlContent = `name: Zoniqfi Aegis Security Gate
+on: [push, pull_request]
+
+jobs:
+  smart-contract-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Aegis Multi-Chain Analyzer
+        uses: zoniqfi/aegis-action@v2
+        with:
+          api-key: \${{ secrets.AEGIS_API_KEY }}
+          fail-on-severity: 'CRITICAL,HIGH'
+          solana-programs: './programs/**/src/lib.rs'
+          arbitrum-contracts: './contracts/**/*.sol'`;
+
+      navigator.clipboard.writeText(yamlContent).then(() => {
+        const btnText = document.getElementById('btn-copy-yaml-text');
+        if (btnText) {
+          const originalText = btnText.innerText;
+          btnText.innerText = "Copied!";
+          setTimeout(() => {
+            btnText.innerText = originalText;
+          }, 1500);
+        }
+      }).catch(err => {
+        console.error("Failed to copy YAML: ", err);
+      });
+    }
+
+    const SAMPLE_SOLANA = `use anchor_lang::prelude::*;
+declare_id!("Zon1qCoreSecureProtocol1111111111111111111");
+
+#[program]
+pub mod zoniq_vault {
+    use super::*;
+    pub fn withdraw_treasury(ctx: Context<WithdrawTreasury>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        require!(ctx.accounts.authority.key() == vault.admin, VaultError::Unauthorized);
+        **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= amount;
+        **ctx.accounts.recipient.to_account_info().try_borrow_mut_lamports()? += amount;
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct WithdrawTreasury<'info> {
+    #[account(mut)]
+    pub vault: Account<'info, VaultData>,
+    pub authority: AccountInfo<'info>, // Missing Signer!
+    #[account(mut)]
+    pub recipient: AccountInfo<'info>,
+}
+#[account]
+pub struct VaultData { pub admin: Pubkey, pub total_locked: u64 }
+#[error_code]
+pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
+
+    const SAMPLE_ARBITRUM = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+contract CommerceGatewayV2 {
+    mapping(address => uint256) public merchantBalances;
+
+    function withdrawBalance() external {
+        uint256 balance = merchantBalances[msg.sender];
+        require(balance > 0, "No balance");
+
+        // External call before zeroing out balance (Reentrancy risk)
+        (bool success, ) = msg.sender.call{value: balance}("");
+        require(success, "Transfer failed");
+
+        merchantBalances[msg.sender] = 0;
+    }
+}`;
+
+    const VULNERABILITIES = [
+      {
+        id: "vuln-1",
+        title: "Missing Signer Check on Vault Authority",
+        severity: "critical",
+        chain: "solana",
+        file: "programs/vault/src/lib.rs",
+        cve: "CWE-285",
+        impact: "Complete drainage of protocol vault funds. Any arbitrary on-chain caller can forge the admin key without signing.",
+        fixSummary: "Change 'pub authority: AccountInfo' to 'pub authority: Signer' in the Accounts macro.",
+        diff: [
+          { type: "del", text: "-    pub authority: AccountInfo<'info>," },
+          { type: "add", text: "+    pub authority: Signer<'info>," }
+        ],
+        remediationCode: "pub authority: Signer<'info>,"
+      },
+      {
+        id: "vuln-2",
+        title: "Reentrancy in withdrawBalance()",
+        severity: "high",
+        chain: "arbitrum",
+        file: "contracts/CommerceGatewayV2.sol",
+        cve: "SWC-107",
+        impact: "External call is executed before state variable is cleared, enabling re-entrancy drain.",
+        fixSummary: "Zero the balance prior to invoking call{value: ...}, or apply OpenZeppelin nonReentrant.",
+        diff: [
+          { type: "add", text: "+    merchantBalances[msg.sender] = 0;" },
+          { type: "del", text: "-    (bool success, ) = msg.sender.call{value: balance}(\"\");" }
+        ],
+        remediationCode: "merchantBalances[msg.sender] = 0;\n(bool success, ) = msg.sender.call{value: balance}(\"\");"
+      }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadTemplate('solana');
+      loadSavedRuleConfigs();
+      renderVulnerabilityList();
+      renderSelectedVulnerability(0);
+    });
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      ['dashboard', 'scanner', 'inspector', 'cicd', 'proof', 'settings'].forEach(p => {
+        const el = document.getElementById(`page-${p}`);
+        if (el) el.classList.toggle('hidden', p !== tabId);
+      });
+      lucide.createIcons();
+    }
+
+    function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+    function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+
+    async function loginWithWallet(type) {
+  try {
+    if (type === 'phantom') {
+      // Detect Phantom wallet extension (Solana)
+      const isPhantomInstalled = window.solana && window.solana.isPhantom;
+      if (!isPhantomInstalled) {
+        alert("Phantom Wallet is not installed. Please install the Phantom browser extension.");
+        window.open("https://phantom.app/", "_blank");
+        return;
+      }
+      
+      const resp = await window.solana.connect();
+      const pubkey = resp.publicKey.toString();
+      currentUser = {
+        name: `${pubkey.slice(0, 4)}...${pubkey.slice(-4)} (Solana)`,
+        role: 'Verified Auditor',
+        rawAddress: pubkey
+      };
+    } else if (type === 'metamask') {
+      // Detect EVM wallet extension (MetaMask / Rabby)
+      if (typeof window.ethereum === 'undefined') {
+        alert("MetaMask or compatible EVM wallet is not detected. Please install MetaMask.");
+        window.open("https://metamask.io/", "_blank");
+        return;
+      }
+
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const address = accounts[0];
+      currentUser = {
+        name: `${address.slice(0, 6)}...${address.slice(-4)} (EVM)`,
+        role: 'Verified Auditor',
+        rawAddress: address
+      };
+    }
+
+    updateAuthUI();
+    closeLoginModal();
+  } catch (err) {
+    console.error("Wallet connection failure:", err);
+    alert(`Connection request rejected or failed: ${err.message}`);
+  }
+}
+
+    function loginWithGitHub() {
+      currentUser = { name: '@roni-dev', role: 'Lead Architect' };
+      updateAuthUI();
+      closeLoginModal();
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      updateAuthUI();
+    }
+
+    function updateAuthUI() {
+      const btn = document.getElementById('btn-login-trigger');
+      const pill = document.getElementById('user-profile-pill');
+      if (currentUser) {
+        btn.classList.add('hidden');
+        pill.classList.remove('hidden');
+        document.getElementById('user-display-name').innerText = currentUser.name;
+        document.getElementById('user-role').innerText = currentUser.role;
+      } else {
+        btn.classList.remove('hidden');
+        pill.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // Gabungan penanganan perubahan Chain: load template dan update filter list
+    function handleChainChange(selectedChain) {
+      currentFilter = selectedChain;
+      if (selectedChain === 'solana') {
+        loadTemplate('solana');
+      } else if (selectedChain === 'arbitrum' || selectedChain === 'ethereum' || selectedChain === 'base' || selectedChain === 'polygon') {
+        loadTemplate('arbitrum');
+      }
+      if (typeof renderVulnerabilityList === 'function') {
+        renderVulnerabilityList();
+      }
+    }
+
+    function loadTemplate(type) {
+      const codeArea = document.getElementById('smart-contract-code');
+      const filename = document.getElementById('editor-filename');
+      if (!codeArea) return;
+
+      if (type === 'solana') {
+        codeArea.value = SAMPLE_SOLANA;
+        if (filename) filename.innerText = "zoniq_vault.rs";
+      } else {
+        codeArea.value = SAMPLE_ARBITRUM;
+        if (filename) filename.innerText = "CommerceGatewayV2.sol";
+      }
+      const linesEl = document.getElementById('editor-lines');
+      if (linesEl) linesEl.innerText = `${codeArea.value.split('\n').length} lines`;
+    }
+
+    function triggerSampleAudit() {
+      switchTab('scanner');
+      startAuditScan();
+    }
+
+    async function startAuditScan() {
+      const terminal = document.getElementById('terminal-logs');
+      const spinner = document.getElementById('scan-spinner');
+      const btn = document.getElementById('btn-start-scan');
+      const code = document.getElementById('smart-contract-code')?.value || '';
+      const chainSelector = document.getElementById('global-chain-selector');
+      const chain = (chainSelector && chainSelector.value !== 'all') ? chainSelector.value : (code.includes('use anchor_lang') ? 'solana' : 'arbitrum');
+      const filename = document.getElementById('editor-filename') ? document.getElementById('editor-filename').innerText : 'contract';
+
+      if (!code.trim()) {
+        alert("Smart contract source code cannot be empty.");
+        return;
+      }
+
+      let activeRules = { sol001: true, sol002: true, arb001: true, arb002: true };
+      const savedConfig = localStorage.getItem('aegis_rule_configs');
+      if (savedConfig) {
+        try {
+          activeRules = JSON.parse(savedConfig);
+        } catch (e) {
+          console.error("Failed to read saved rule configs", e);
+        }
+      }
+
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+      spinner.classList.remove('hidden');
+
+      terminal.innerHTML = `
+        <div class="text-indigo-400 font-bold">[*] Initializing Aegis Deep Scan Pipeline...</div>
+        <div class="text-slate-400">> Target Ecosystem: <span class="font-bold text-white uppercase">${chain}</span></div>
+        <div class="text-slate-400">> Analyzing file: <span class="text-cyan-300 font-mono">${filename}</span></div>
+      `;
+
+      try {
+        const response = await fetch('http://localhost:4000/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chain, code, filename, activeRules })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || data.error || "Audit analysis failed.");
+        }
+
+        terminal.innerHTML += `
+          <div class="text-cyan-400">> AST parsing & invariant rules evaluated.</div>
+          <div class="text-emerald-400 font-bold">> [✓] Scan complete in ${data.meta ? data.meta.scanDurationMs : 120}ms.</div>
+          <div class="text-amber-400">> Issues detected: ${data.totalIssues} issue(s)</div>
+          <div class="text-slate-400">> Syncing findings to Inspector view...</div>
+        `;
+
+        if (Array.isArray(data.issues) && data.issues.length > 0) {
+          const parsedIssues = data.issues.map((issue, idx) => ({
+            id: issue.id || `vuln-${idx + 1}`,
+            title: issue.title,
+            severity: (issue.severity || 'high').toLowerCase(),
+            chain: issue.chain || chain,
+            file: filename,
+            line: issue.line || 1,
+            cve: issue.cve || 'CWE-285',
+            summary: issue.description,
+            impact: issue.description,
+            fixSummary: issue.recommendation,
+            diff: [
+              { type: "del", text: `- Line ${issue.line}: ${issue.description}` },
+              { type: "add", text: `+ Fix: ${issue.recommendation}` }
+            ],
+            remediationCode: issue.recommendation
+          }));
+
+          VULNERABILITIES.length = 0;
+          VULNERABILITIES.push(...parsedIssues);
+        } else {
+          VULNERABILITIES.length = 0;
+        }
+
+        // ... (di dalam blok try, setelah renderVulnerabilityList & renderSelectedVulnerability)
+        const badgeCount = document.getElementById('badge-vuln-count');
+        if (badgeCount) badgeCount.innerText = VULNERABILITIES.length;
+
+        renderVulnerabilityList();
+        renderSelectedVulnerability(0);
+        refreshCertificateData(); // <-- Tambahkan di sini (saat scan API sukses)
+
+        setTimeout(() => {
+          switchTab('inspector');
+        }, 1000);
+
+      } catch (err) {
+        terminal.innerHTML += `
+          <div class="text-rose-400">> [ERROR] Failed connecting to API: ${err.message}</div>
+          <div class="text-slate-500">> Falling back to local default findings inspector.</div>
+        `;
+        renderVulnerabilityList();
+        renderSelectedVulnerability(0);
+        refreshCertificateData(); // <-- Tambahkan di sini juga (saat fallback)
+        setTimeout(() => { switchTab('inspector'); }, 1200);
+      } finally {
+        spinner.classList.add('hidden');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+      }
+    }
+
+    function exportAuditReport() {
+      const findings = [...VULNERABILITIES];
+      const chainSelector = document.getElementById('global-chain-selector');
+      const currentChain = (chainSelector && chainSelector.value && chainSelector.value !== 'all') ? chainSelector.value : 'solana';
+      const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
+      const filename = filenameEl ? filenameEl.innerText.trim() : 'contract';
+
+      const reportPayload = {
+        metadata: {
+          platform: "Zoniqfi Aegis Security Core",
+          engineVersion: "2.4.0",
+          targetChain: currentChain,
+          targetFile: filename,
+          timestamp: new Date().toISOString(),
+          status: "COMPLETED"
+        },
+        summary: {
+          totalFindings: findings.length,
+          critical: findings.filter(v => (v.severity || '').toLowerCase().includes('crit')).length,
+          high: findings.filter(v => (v.severity || '').toLowerCase().includes('high')).length,
+          medium: findings.filter(v => (v.severity || '').toLowerCase().includes('med')).length
+        },
+        findings: findings
+      };
+
+      const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = `aegis-audit-${filename.replace(/[^a-zA-Z0-9_-]/g, "_")}-${Date.now()}.json`;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+      URL.revokeObjectURL(url);
+    }
+
+    function generateProofOfAudit() {
+      refreshCertificateData();
+      switchTab('proof');
+    }
+
+    function renderVulnerabilityList() {
+      const container = document.getElementById('vulnerability-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      let list = VULNERABILITIES;
+      if (currentFilter !== 'all') {
+        list = VULNERABILITIES.filter(v => v.chain.toLowerCase() === currentFilter.toLowerCase());
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-4 rounded-xl bg-[#111827] border border-slate-800 text-slate-400 text-xs text-center">No vulnerabilities found for selected ecosystem.</div>`;
+        return;
+      }
+
+      list.forEach((vuln, idx) => {
+        const div = document.createElement('div');
+        const isSelected = idx === selectedVulnIndex;
+        div.className = `p-4 rounded-xl border transition cursor-pointer ${
+          isSelected ? 'bg-[#152033] border-indigo-500' : 'bg-[#111827] border-[#1E293B]'
+        }`;
+
+        div.onclick = () => {
+          selectedVulnIndex = idx;
+          renderVulnerabilityList();
+          renderSelectedVulnerability(idx);
+        };
+
+        const sev = (vuln.severity || '').toLowerCase();
+        let sevColor = 'text-cyan-400';
+        if (sev === 'critical') sevColor = 'text-rose-400';
+        else if (sev === 'high') sevColor = 'text-amber-400';
+        else if (sev === 'medium') sevColor = 'text-blue-400';
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-mono mb-1">
+            <span class="${sevColor} font-bold uppercase">${vuln.severity}</span>
+            <span class="text-slate-400">${vuln.chain}</span>
+          </div>
+          <h4 class="text-xs font-bold text-white">${vuln.title}</h4>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderSelectedVulnerability(idx) {
+      let list = VULNERABILITIES;
+      if (currentFilter !== 'all') {
+        list = VULNERABILITIES.filter(v => v.chain.toLowerCase() === currentFilter.toLowerCase());
+      }
+      const vuln = list[idx] || VULNERABILITIES[0];
+      if (!vuln) return;
+
+      const titleEl = document.getElementById('selected-vuln-title');
+      const cveEl = document.getElementById('selected-vuln-cve');
+      const descEl = document.getElementById('selected-vuln-desc');
+      const fixEl = document.getElementById('selected-vuln-fix-summary');
+      const fileEl = document.getElementById('diff-filename');
+      const badgeEl = document.getElementById('selected-vuln-badge');
+
+      if (titleEl) titleEl.innerText = vuln.title;
+      if (cveEl) cveEl.innerText = vuln.cve || 'N/A';
+      if (descEl) descEl.innerText = vuln.impact || vuln.summary || 'No description available.';
+      if (fixEl) fixEl.innerText = vuln.fixSummary || 'No remediation provided.';
+      if (fileEl) fileEl.innerText = vuln.file || 'Unknown file';
+
+      if (badgeEl) {
+        const sev = (vuln.severity || 'HIGH').toLowerCase();
+        badgeEl.innerText = sev.toUpperCase();
+        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold font-mono border';
+
+        if (sev === 'critical') {
+          badgeEl.classList.add('bg-rose-500/20', 'text-rose-400', 'border-rose-500/30');
+        } else if (sev === 'high') {
+          badgeEl.classList.add('bg-amber-500/20', 'text-amber-400', 'border-amber-500/30');
+        } else if (sev === 'medium') {
+          badgeEl.classList.add('bg-blue-500/20', 'text-blue-400', 'border-blue-500/30');
+        } else {
+          badgeEl.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
+        }
+      }
+
+      const diffBox = document.getElementById('diff-container');
+      if (diffBox) {
+        diffBox.innerHTML = '';
+        if (Array.isArray(vuln.diff) && vuln.diff.length > 0) {
+          vuln.diff.forEach((d) => {
+            const row = document.createElement('div');
+            row.className = d.type === 'add' ? 'diff-add px-2 py-0.5' : 'diff-del px-2 py-0.5';
+            row.innerText = d.text;
+            diffBox.appendChild(row);
+          });
+        } else {
+          diffBox.innerHTML = '<div class="text-slate-500 text-xs p-2">No code diff preview available for this issue.</div>';
+        }
+      }
+    }
+
+    function copyPatchCode() {
+      const vuln = VULNERABILITIES[selectedVulnIndex] || VULNERABILITIES[0];
+      if (!vuln) return;
+      navigator.clipboard.writeText(vuln.remediationCode || '');
+      const btn = document.getElementById('btn-copy-text');
+      if (btn) {
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = "Copy Patch", 1500);
+      }
+    }
+
+    function switchInputMode(mode) {
+      const pTab = document.getElementById('tab-input-paste');
+      const gTab = document.getElementById('tab-input-github');
+      const uTab = document.getElementById('tab-input-upload');
+      
+      const pCon = document.getElementById('container-input-paste');
+      const gCon = document.getElementById('container-input-github');
+      const uCon = document.getElementById('container-input-upload');
+
+      [pTab, gTab, uTab].forEach(t => {
+        if (t) t.className = "text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium transition";
+      });
+
+      if (pCon) pCon.classList.add('hidden');
+      if (gCon) gCon.classList.add('hidden');
+      if (uCon) uCon.classList.add('hidden');
+
+      if (mode === 'paste') {
+        if (pTab) pTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+        if (pCon) pCon.classList.remove('hidden');
+      } else if (mode === 'github') {
+        if (gTab) gTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+        if (gCon) gCon.classList.remove('hidden');
+      } else if (mode === 'upload') {
+        if (uTab) uTab.className = "text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium transition";
+        if (uCon) uCon.classList.remove('hidden');
+      }
+    }
+
+    async function fetchGithubCode() {
+      const input = document.getElementById('github-url-input')?.value.trim();
+      if (!input) {
+        alert('Masukkan URL GitHub terlebih dahulu.');
+        return;
+      }
+
+      let rawUrl = input;
+      if (input.includes('github.com') && input.includes('/blob/')) {
+        rawUrl = input.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+      }
+
+      try {
+        const res = await fetch(rawUrl);
+        if (!res.ok) throw new Error('Gagal mengambil file dari GitHub. Pastikan URL publik valid.');
+        const codeText = await res.text();
+
+        const codeArea = document.getElementById('smart-contract-code');
+        if (codeArea) {
+          codeArea.value = codeText;
+          const linesEl = document.getElementById('editor-lines');
+          if (linesEl) linesEl.innerText = `${codeText.split('\n').length} lines`;
+          switchInputMode('paste');
+          alert('Berhasil mengimpor kode dari GitHub!');
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        const codeArea = document.getElementById('smart-contract-code');
+        const filenameEl = document.getElementById('editor-filename');
+        if (codeArea) {
+          codeArea.value = content;
+          if (filenameEl) filenameEl.innerText = file.name;
+          const linesEl = document.getElementById('editor-lines');
+          if (linesEl) linesEl.innerText = `${content.split('\n').length} lines`;
+          switchInputMode('paste');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function refreshCertificateData() {
+      // 1. Ambil issue pertama hasil scan aktif (jika ada)
+      const activeIssue = (Array.isArray(VULNERABILITIES) && VULNERABILITIES.length > 0) ? VULNERABILITIES[0] : null;
+
+      // 2. Tentukan file dan chain secara dinamis dari hasil scan atau selector
+      const chainSelector = document.getElementById('global-chain-selector');
+      const chain = activeIssue?.chain || ((chainSelector && chainSelector.value !== 'all') ? chainSelector.value : 'solana');
+      
+      const filenameEl = document.getElementById('editor-filename') || document.getElementById('diff-filename');
+      const filename = activeIssue?.file || (filenameEl ? filenameEl.innerText.trim() : 'contract');
+
+      // 3. Update data pada kartu sertifikat Proof of Audit
+      const certContract = document.getElementById('cert-contract-name');
+      if (certContract) certContract.innerText = filename;
+
+      const certChain = document.getElementById('cert-target-chain');
+      if (certChain) {
+        if (chain.toLowerCase() === 'arbitrum' || chain.toLowerCase() === 'ethereum' || chain.toLowerCase() === 'base' || chain.toLowerCase() === 'polygon') {
+          certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#28A0F0]"></span> Arbitrum Nitro (L2 EVM)`;
+        } else {
+          certChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#14F195]"></span> Solana SVM (Anchor Framework)`;
+        }
+      }
+
+      // 4. Update data pada simulasi GitHub PR jika elemennya ada
+      const prFile = document.getElementById('pr-sim-file');
+      const prIssue = document.getElementById('pr-sim-issue');
+      if (prFile) prFile.innerText = `${filename}:${activeIssue?.line || 1}`;
+      if (prIssue && activeIssue) prIssue.innerText = activeIssue.title;
+
+      const certDate = document.getElementById('cert-date-display');
+      if (certDate) certDate.innerText = new Date().toUTCString();
+
+      const randomBytes = new Uint8Array(24);
+      crypto.getRandomValues(randomBytes);
+      const newHash = "0x" + Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      const certHash = document.getElementById('cert-hash-display');
+      if (certHash) certHash.innerText = newHash;
+
+      const qrEl = document.getElementById('cert-qr-code');
+      if (qrEl) {
+        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://zoniqfinance.com/verify/${newHash}`;
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function printCertificate() {
+      refreshCertificateData();
+      window.print();
+    }
+
+    function loadSavedRuleConfigs() {
+      const savedConfig = localStorage.getItem('aegis_rule_configs');
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          if (document.getElementById('rule-sol-001')) document.getElementById('rule-sol-001').checked = config.sol001 ?? true;
+          if (document.getElementById('rule-sol-002')) document.getElementById('rule-sol-002').checked = config.sol002 ?? true;
+          if (document.getElementById('rule-arb-001')) document.getElementById('rule-arb-001').checked = config.arb001 ?? true;
+          if (document.getElementById('rule-arb-002')) document.getElementById('rule-arb-002').checked = config.arb002 ?? true;
+        } catch (e) {
+          console.error("Failed to parse saved rule configs", e);
+        }
+      }
+    }
+
+    function saveRuleConfigs() {
+      const config = {
+        sol001: document.getElementById('rule-sol-001')?.checked ?? true,
+        sol002: document.getElementById('rule-sol-002')?.checked ?? true,
+        arb001: document.getElementById('rule-arb-001')?.checked ?? true,
+        arb002: document.getElementById('rule-arb-002')?.checked ?? true,
+      };
+      localStorage.setItem('aegis_rule_configs', JSON.stringify(config));
+      alert("Rule configurations saved successfully!");
+    }
+  </script>
+</body>
+</html>
