@@ -1795,7 +1795,7 @@ jobs:
 
       const isSolana = targetEco.toLowerCase().includes('solana') || activeChainSelector.toLowerCase().includes('solana');
 
-      // 2. Gunakan nama file aktif dinamis, bukan VendorPayFiVault.sol
+      // 2. Gunakan nama file aktif dinamis
       const dynamicFileName = window.currentFileName || 
                         document.getElementById('current-file-name')?.innerText || 
                         (isSolana ? 'lib.rs' : 'Contract.sol');
