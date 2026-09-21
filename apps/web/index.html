@@ -1698,27 +1698,36 @@ jobs:
     }
 
     function exportAuditReport() {
-      const findings = [...VULNERABILITIES];
-      const filename = document.getElementById('editor-filename')?.innerText || 'contract';
-      const reportPayload = {
-        platform: "Zoniqfi Guard Security Core",
-        version: "2.4.0",
-        targetFile: filename,
-        timestamp: new Date().toISOString(),
-        totalFindings: findings.length,
-        findings: findings
-      };
+  // Validasi: Cek apakah user sudah login atau wallet sudah terhubung
+  const connectedWallet = localStorage.getItem("connected_wallet");
+  if (!currentUser && !connectedWallet) {
+    alert("Authentication Required: Please connect your Web3 wallet or sign in to export the comprehensive audit report.");
+    openLoginModal();
+    return; // Hentikan proses, file JSON tidak akan terunduh
+  }
 
-      const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-report-${filename.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+  const findings = [...VULNERABILITIES];
+  const filename = document.getElementById('editor-filename')?.innerText || 'contract';
+  const reportPayload = {
+    platform: "Zoniqfi Guard Security Core",
+    version: "2.4.0",
+    targetFile: filename,
+    timestamp: new Date().toISOString(),
+    auditedBy: currentUser ? currentUser.name : connectedWallet,
+    totalFindings: findings.length,
+    findings: findings
+  };
+
+  const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit-report-${filename.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
     function generateProofOfAudit() {
       refreshCertificateData();
@@ -1730,9 +1739,16 @@ jobs:
     }
 
     function printCertificate() {
-      syncAllModules();
-      window.print();
-    }
+  const connectedWallet = localStorage.getItem("connected_wallet");
+  if (!currentUser && !connectedWallet) {
+    alert("Authentication Required: Please connect your Web3 wallet or sign in to export or print this official Proof of Audit certificate.");
+    openLoginModal();
+    return; // Blokir dialog cetak PDF browser
+  }
+
+  syncAllModules();
+  window.print();
+}
 
     function loadSavedRuleConfigs() {
       const savedConfig = localStorage.getItem('aegis_rule_configs');
