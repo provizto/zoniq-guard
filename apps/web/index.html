@@ -317,6 +317,83 @@
             </div>
           </div>
         </div>
+
+        <!-- Security Audit Subscription Section -->
+        <section id="subscription-section" class="mt-12 mb-8">
+          <div class="text-center mb-8">
+            <h2 class="text-xl font-bold text-white tracking-wide">Security Audit Subscription</h2>
+            <p class="text-xs text-slate-400 mt-1">Direct wallet-to-wallet payment. No intermediaries, instant protocol access.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <!-- Pro Security Plan -->
+            <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-6 flex flex-col justify-between space-y-6 hover:border-indigo-500/50 transition shadow-xl">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-base font-bold text-white">Pro Security Plan</h3>
+                  <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Standard</span>
+                </div>
+                <p class="text-xs text-slate-400">Ideal for independent developers and smart contract engineers.</p>
+                <div class="mt-4 flex items-baseline gap-1.5">
+                  <span class="text-2xl font-black text-white font-mono">0.05 SOL</span>
+                  <span class="text-xs text-slate-400 font-mono">/ 0.01 ETH</span>
+                </div>
+                <span class="text-[11px] text-slate-500 block mt-0.5 font-mono">Per-scan automated deep analysis</span>
+                <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                    <span>Full AST Vulnerability Inspector</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                    <span>Multi-Chain Support (SVM & EVM)</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                    <span>On-Chain Attestation Proof</span>
+                  </li>
+                </ul>
+              </div>
+              <button onclick="openLoginModal()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold tracking-wide transition shadow-lg shadow-indigo-600/20">
+                Subscribe Pro Plan &rarr;
+              </button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-6 flex flex-col justify-between space-y-6 hover:border-emerald-500/50 transition shadow-xl">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-base font-bold text-white">Enterprise Plan</h3>
+                  <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Enterprise</span>
+                </div>
+                <p class="text-xs text-slate-400">Comprehensive security audit for production Web3 protocols.</p>
+                <div class="mt-4 flex items-baseline gap-1.5">
+                  <span class="text-2xl font-black text-white font-mono">0.25 SOL</span>
+                  <span class="text-xs text-slate-400 font-mono">/ 0.05 ETH</span>
+                </div>
+                <span class="text-[11px] text-slate-500 block mt-0.5 font-mono">Dedicated security suite & priority queue</span>
+                <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                    <span>All Pro Features Included</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                    <span>Reentrancy & DoS Deep Logic Scan</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                    <span>Official Protocol Verification Badge</span>
+                  </li>
+                </ul>
+              </div>
+              <button onclick="openLoginModal()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold tracking-wide transition shadow-lg shadow-emerald-600/20">
+                Subscribe Enterprise Plan &rarr;
+              </button>
+            </div>
+          </div>
+        </section>
+
       </div>
 
       <!-- ================= PAGE 2: AUDIT SCANNER HUB ================= -->
@@ -770,82 +847,6 @@
           </div>
         </div>
       </div>
-
-      <!-- ================= SUBSCRIPTION PLANS SECTION ================= -->
-      <section class="mt-12 mb-8">
-        <div class="text-center mb-8">
-          <h2 class="text-xl font-bold text-white tracking-wide">Security Audit Subscription</h2>
-          <p class="text-xs text-slate-400 mt-1">Direct wallet-to-wallet payment. No intermediaries, instant protocol access.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <!-- Pro Plan Card -->
-          <div class="bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-6 transition flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-white">Pro Security Plan</h3>
-                <span class="px-2.5 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-[11px] font-medium">Standard</span>
-              </div>
-              <p class="text-xs text-slate-400 mt-2">Ideal for independent developers and smart contract engineers.</p>
-              
-              <div class="mt-4 mb-6">
-                <div class="text-2xl font-bold text-white">0.05 SOL <span class="text-xs text-slate-400 font-normal">/ 0.01 ETH</span></div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Per-scan automated deep analysis</div>
-              </div>
-
-              <ul class="space-y-2 text-xs text-slate-300">
-                <li class="flex items-center gap-2">
-                  <span class="text-indigo-400">&check;</span> Full AST Vulnerability Inspector
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-indigo-400">&check;</span> Multi-Chain Support (SVM & EVM)
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-indigo-400">&check;</span> On-Chain Attestation Proof
-                </li>
-              </ul>
-            </div>
-
-            <button onclick="paySubscriptionDirect('pro')" class="mt-6 w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold tracking-wide transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-              <span>Subscribe Pro Plan</span> &rarr;
-            </button>
-          </div>
-
-          <!-- Enterprise Plan Card -->
-          <div class="bg-slate-900/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-6 transition flex flex-col justify-between relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-white">Enterprise Plan</h3>
-                <span class="px-2.5 py-0.5 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-medium">Enterprise</span>
-              </div>
-              <p class="text-xs text-slate-400 mt-2">Comprehensive security audit for production Web3 protocols.</p>
-              
-              <div class="mt-4 mb-6">
-                <div class="text-2xl font-bold text-white">0.25 SOL <span class="text-xs text-slate-400 font-normal">/ 0.05 ETH</span></div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Dedicated security suite & priority queue</div>
-              </div>
-
-              <ul class="space-y-2 text-xs text-slate-300">
-                <li class="flex items-center gap-2">
-                  <span class="text-emerald-400">&check;</span> All Pro Features Included
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-emerald-400">&check;</span> Reentrancy & DoS Deep Logic Scan
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-emerald-400">&check;</span> Official Protocol Verification Badge
-                </li>
-              </ul>
-            </div>
-
-            <button onclick="paySubscriptionDirect('enterprise')" class="mt-6 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold tracking-wide transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-              <span>Subscribe Enterprise Plan</span> &rarr;
-            </button>
-          </div>
-        </div>
-      </section>
-      <!-- ================= END SUBSCRIPTION PLANS ================= -->
   
   <!-- FOOTER RAMPING & NON-STICKY -->
   <footer class="w-full bg-[#0B101B] border-t border-[#1B273F] py-3 px-4 sm:px-6 text-xs text-slate-400 mt-auto">
@@ -1016,14 +1017,22 @@
     function updateAuthUI() {
       const btn = document.getElementById('btn-login-trigger');
       const pill = document.getElementById('user-profile-pill');
+      const subSection = document.getElementById('subscription-section');
+
       if (currentUser) {
         btn.classList.add('hidden');
         pill.classList.remove('hidden');
         document.getElementById('user-display-name').innerText = currentUser.name;
         document.getElementById('user-role').innerText = currentUser.role;
+        
+        // Sembunyikan bagian subscription jika sudah login/terhubung
+        if (subSection) subSection.classList.add('hidden');
       } else {
         btn.classList.remove('hidden');
         pill.classList.add('hidden');
+
+        // Tampilkan kembali jika belum login/logout
+        if (subSection) subSection.classList.remove('hidden');
       }
       lucide.createIcons();
     }
