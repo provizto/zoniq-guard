@@ -771,7 +771,117 @@
         </div>
       </div>
 
+      <!-- ================= SUBSCRIPTION PLANS SECTION ================= -->
+      <section class="mt-12 mb-8">
+        <div class="text-center mb-8">
+          <h2 class="text-xl font-bold text-white tracking-wide">Security Audit Subscription</h2>
+          <p class="text-xs text-slate-400 mt-1">Direct wallet-to-wallet payment. No intermediaries, instant protocol access.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <!-- Pro Plan Card -->
+          <div class="bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-6 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-semibold text-white">Pro Security Plan</h3>
+                <span class="px-2.5 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-[11px] font-medium">Standard</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-2">Ideal for independent developers and smart contract engineers.</p>
+              
+              <div class="mt-4 mb-6">
+                <div class="text-2xl font-bold text-white">0.05 SOL <span class="text-xs text-slate-400 font-normal">/ 0.01 ETH</span></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Per-scan automated deep analysis</div>
+              </div>
+
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-center gap-2">
+                  <span class="text-indigo-400">&check;</span> Full AST Vulnerability Inspector
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-indigo-400">&check;</span> Multi-Chain Support (SVM & EVM)
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-indigo-400">&check;</span> On-Chain Attestation Proof
+                </li>
+              </ul>
+            </div>
+
+            <button onclick="paySubscriptionDirect('pro')" class="mt-6 w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold tracking-wide transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+              <span>Subscribe Pro Plan</span> &rarr;
+            </button>
+          </div>
+
+          <!-- Enterprise Plan Card -->
+          <div class="bg-slate-900/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-6 transition flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-semibold text-white">Enterprise Plan</h3>
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-medium">Enterprise</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-2">Comprehensive security audit for production Web3 protocols.</p>
+              
+              <div class="mt-4 mb-6">
+                <div class="text-2xl font-bold text-white">0.25 SOL <span class="text-xs text-slate-400 font-normal">/ 0.05 ETH</span></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Dedicated security suite & priority queue</div>
+              </div>
+
+              <ul class="space-y-2 text-xs text-slate-300">
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-400">&check;</span> All Pro Features Included
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-400">&check;</span> Reentrancy & DoS Deep Logic Scan
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-400">&check;</span> Official Protocol Verification Badge
+                </li>
+              </ul>
+            </div>
+
+            <button onclick="paySubscriptionDirect('enterprise')" class="mt-6 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold tracking-wide transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+              <span>Subscribe Enterprise Plan</span> &rarr;
+            </button>
+          </div>
+        </div>
+      </section>
+      <!-- ================= END SUBSCRIPTION PLANS ================= -->
     </main>
+  
+  <!-- ================= FOOTER COMPONENT ================= -->
+    <footer class="mt-16 border-t border-slate-800/80 bg-[#0B1120]/90 backdrop-blur text-slate-400 text-xs py-8 px-4 sm:px-8">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- Brand & Copyright -->
+        <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+          <div class="flex items-center gap-2 font-semibold text-slate-200">
+            <span class="w-5 h-5 rounded bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold">Z</span>
+            <span class="tracking-wide">Zoniq-Guard</span>
+          </div>
+          <span class="hidden sm:inline text-slate-700">&bull;</span>
+          <p class="text-slate-400 text-[11px] sm:text-xs">
+            &copy; 2026 <span class="text-slate-200 font-medium">Zoniq-Guard</span> by Zoniqfi Digital Core Labs. All rights reserved.
+          </p>
+        </div>
+
+        <!-- Protocol Badges & Engine Status -->
+        <div class="flex items-center gap-4 text-[11px]">
+          <div class="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-slate-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Core Engine Active</span>
+          </div>
+          <span class="text-slate-600 hidden sm:inline">|</span>
+          <div class="text-slate-400 flex items-center gap-2">
+            <span>Solana SVM</span>
+            <span class="text-slate-600">&bull;</span>
+            <span>Arbitrum EVM</span>
+          </div>
+        </div>
+
+      </div>
+    </footer>
+    <!-- ================= END FOOTER ================= -->
+
   </div>
 
   <!-- AUTH MODAL -->
@@ -1703,40 +1813,92 @@ jobs:
       switchTab('proof');
       alert(`Attestation recorded successfully on ${chainName}!`);
     }
-  </script>
 
-  <!-- ================= FOOTER COMPONENT ================= -->
-  <footer class="mt-16 border-t border-slate-800/80 bg-[#0B1120]/90 backdrop-blur text-slate-400 text-xs py-8 px-4 sm:px-8">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    // ==========================================
+// 💳 DIRECT WALLET-TO-WALLET SUBSCRIPTION PAYMENT (FULL EN)
+// ==========================================
+const ADMIN_PAYMENT_WALLETS = {
+  // Replace with your Solana actual admin wallet addresses
+  solana: "9bvD1899yYZCf2MKeuds59EXAGgVBwuFkrCS1Cgo3AhS",
+  
+  // Replace with your Arbitrum/EVM admin address
+  evm: "0xc7ac22cbe2c96c308dafbec609025c03a713fe01"
+};
+
+// Plan pricing definitions
+const PLAN_PRICING = {
+  pro: { sol: 0.05, eth: 0.01, name: "Pro Security Plan" },
+  enterprise: { sol: 0.25, eth: 0.05, name: "Enterprise Audit Plan" }
+};
+
+async function paySubscriptionDirect(planTier) {
+  const plan = PLAN_PRICING[planTier] || PLAN_PRICING.pro;
+  const chain = document.getElementById("global-chain-selector")?.value || "solana";
+
+  try {
+    if (chain === "solana" || (window.solana && window.solana.isConnected)) {
+      // --- SOLANA DEVNET / MAINNET (PHANTOM) ---
+      if (!window.solana) {
+        alert("Phantom Wallet not detected! Please install or unlock Phantom.");
+        return;
+      }
+      const resp = await window.solana.connect();
+      const userPubkey = resp.publicKey;
+
+      const connection = new solanaWeb3.Connection(
+        solanaWeb3.clusterApiUrl("devnet"),
+        "confirmed"
+      );
+
+      const lamports = Math.round(plan.sol * solanaWeb3.LAMPORTS_PER_SOL);
+      const recipient = new solanaWeb3.PublicKey(ADMIN_PAYMENT_WALLETS.solana);
+
+      const transaction = new solanaWeb3.Transaction().add(
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: userPubkey,
+          toPubkey: recipient,
+          lamports: lamports
+        })
+      );
+
+      transaction.feePayer = userPubkey;
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      const { signature } = await window.solana.signAndSendTransaction(transaction);
+      await connection.confirmTransaction(signature, "confirmed");
+
+      alert(`Payment Successful!\nPlan: ${plan.name}\nTx Signature: ${signature}\nFunds transferred directly to treasury.`);
       
-      <!-- Brand & Copyright -->
-      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
-        <div class="flex items-center gap-2 font-semibold text-slate-200">
-          <span class="w-5 h-5 rounded bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold">Z</span>
-          <span class="tracking-wide">Zoniq-Guard</span>
-        </div>
-        <span class="hidden sm:inline text-slate-700">&bull;</span>
-        <p class="text-slate-400 text-[11px] sm:text-xs">
-          &copy; 2026 <span class="text-slate-200 font-medium">Zoniq-Guard</span> by Zoniqfi Digital Core Labs. All rights reserved.
-        </p>
-      </div>
+    } else {
+      // --- EVM / ARBITRUM SEPOLIA (METAMASK) ---
+      if (!window.ethereum) {
+        alert("Web3 Wallet not detected! Please install MetaMask.");
+        return;
+      }
 
-      <!-- Protocol Badges & Engine Status -->
-      <div class="flex items-center gap-4 text-[11px]">
-        <div class="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-slate-300">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Core Engine Active</span>
-        </div>
-        <span class="text-slate-600 hidden sm:inline">|</span>
-        <div class="text-slate-400 flex items-center gap-2">
-          <span>Solana SVM</span>
-          <span class="text-slate-600">&bull;</span>
-          <span>Arbitrum EVM</span>
-        </div>
-      </div>
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
+      const weiAmount = "0x" + BigInt(Math.round(plan.eth * 1e18)).toString(16);
 
-    </div>
-  </footer>
-  <!-- ================= END FOOTER ================= -->
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: sender,
+            to: ADMIN_PAYMENT_WALLETS.evm,
+            value: weiAmount
+          }
+        ]
+      });
+
+      alert(`Payment Successful!\nPlan: ${plan.name}\nTx Hash: ${txHash}\nFunds transferred directly to treasury.`);
+    }
+  } catch (err) {
+    console.error("Payment error:", err);
+    alert("Payment rejected or failed: " + (err.message || err));
+  }
+}
+  </script>
 </body>
 </html>
