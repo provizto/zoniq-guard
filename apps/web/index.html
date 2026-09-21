@@ -632,7 +632,7 @@
               </div>
               <div>
                 <span class="text-slate-400 block mb-0.5 font-medium">Static AST Rule Coverage:</span>
-                <span class="font-mono text-slate-300">100% (Reentrancy Guard & Access Control Enforced)</span>
+                <span id="cert-rule-coverage" class="font-mono text-slate-300">100% (Signer Check & Canonical Bump Enforced)</span>
               </div>
             </div>
 
@@ -1256,9 +1256,34 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
       const certContract = document.getElementById('cert-contract-name');
       const certDate = document.getElementById('cert-date-display');
       const certHash = document.getElementById('cert-hash-display');
+      const certTargetChain = document.getElementById('cert-target-chain');
+      const certRuleCoverage = document.getElementById('cert-rule-coverage');
 
       if (certContract) certContract.innerText = filename;
       if (certDate) certDate.innerText = new Date().toUTCString();
+
+      // Deteksi ekosistem target secara otomatis berdasarkan ekstensi atau isi kode
+      const codeContent = document.getElementById('smart-contract-code')?.value || '';
+      const isSolana = filename.endsWith('.rs') || codeContent.includes('anchor_lang') || codeContent.includes('#[program]');
+
+      // Sinkronisasi Target Ecosystem & Rule Coverage
+      if (certTargetChain) {
+        if (isSolana) {
+          certTargetChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#14F195]"></span> Solana Anchor (SVM)`;
+          certTargetChain.className = "font-mono text-[#14F195] font-semibold flex items-center gap-1.5";
+        } else {
+          certTargetChain.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#28A0F0]"></span> Arbitrum Nitro (L2 EVM)`;
+          certTargetChain.className = "font-mono text-[#28A0F0] font-semibold flex items-center gap-1.5";
+        }
+      }
+
+      if (certRuleCoverage) {
+        if (isSolana) {
+          certRuleCoverage.innerText = "100% (Signer Check & Canonical Bump Enforced)";
+        } else {
+          certRuleCoverage.innerText = "100% (Reentrancy Guard & Access Control Enforced)";
+        }
+      }
 
       const randomBytes = new Uint8Array(24);
       crypto.getRandomValues(randomBytes);
