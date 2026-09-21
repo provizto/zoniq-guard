@@ -164,7 +164,7 @@
 
       <div class="flex items-center justify-between px-2 text-xs">
         <span class="text-slate-400">Scan Credits:</span>
-        <span id="scan-credits-display" class="font-mono font-bold text-slate-200">100 / 100</span>
+        <span id="scan-credits-display" class="font-mono font-bold text-slate-200">0 / 0</span>
       </div>
       <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
         <div class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full w-[100%]"></div>
@@ -1079,21 +1079,49 @@
     }
 
     function syncQuotaDisplay() {
-      const quotaBadge = document.getElementById('user-quota-badge');
-      if (!quotaBadge) return;
+  // Targetkan ID sidebar dan ID badge (jika ada)
+  const quotaBadge = document.getElementById('user-quota-badge');
+  const creditsDisplay = document.getElementById('scan-credits-display');
+  const progressBar = document.querySelector('.bg-gradient-to-r') || document.getElementById('quota-progress-bar');
 
-      const acc = getScanQuota();
-      if (acc.isUnlimited) {
-        quotaBadge.innerText = 'Unlimited (Admin)';
-        quotaBadge.className = 'text-indigo-400 font-bold';
-      } else if (acc.quota > 0) {
-        quotaBadge.innerText = `${acc.quota} Left (${acc.tier})`;
-        quotaBadge.className = 'text-emerald-400 font-bold';
-      } else {
-        quotaBadge.innerText = '0 Left (Exhausted)';
-        quotaBadge.className = 'text-rose-400 font-bold';
-      }
+  // KONDISI 1: Belum Login
+  if (!currentUser) {
+    if (creditsDisplay) creditsDisplay.innerText = '0 / 0';
+    if (quotaBadge) {
+      quotaBadge.innerText = 'Not Connected';
+      quotaBadge.className = 'text-slate-400 font-normal';
     }
+    if (progressBar) progressBar.style.width = '0%';
+    return;
+  }
+
+  // KONDISI 2: Sudah Login (Ambil kuota riil)
+  const acc = (typeof getScanQuota === 'function') ? getScanQuota() : { isUnlimited: false, quota: 0, tier: 'free' };
+
+  if (acc.isUnlimited) {
+    if (creditsDisplay) creditsDisplay.innerText = 'UNLIMITED';
+    if (quotaBadge) {
+      quotaBadge.innerText = 'Unlimited (Admin)';
+      quotaBadge.className = 'text-indigo-400 font-bold';
+    }
+    if (progressBar) progressBar.style.width = '100%';
+  } else if (acc.quota > 0) {
+    const maxQuota = acc.tier?.toLowerCase() === 'pro' ? 25 : 1;
+    if (creditsDisplay) creditsDisplay.innerText = `${acc.quota} / ${maxQuota}`;
+    if (quotaBadge) {
+      quotaBadge.innerText = `${acc.quota} Left (${acc.tier})`;
+      quotaBadge.className = 'text-emerald-400 font-bold';
+    }
+    if (progressBar) progressBar.style.width = `${Math.min(100, (acc.quota / maxQuota) * 100)}%`;
+  } else {
+    if (creditsDisplay) creditsDisplay.innerText = '0 Left';
+    if (quotaBadge) {
+      quotaBadge.innerText = '0 Left (Exhausted)';
+      quotaBadge.className = 'text-rose-400 font-bold';
+    }
+    if (progressBar) progressBar.style.width = '0%';
+  }
+}
 
     // ========================================================
     // PLAN SUBSCRIPTION & QUOTA TOP-UP (REAL ON-CHAIN ACTIVATION)
