@@ -900,17 +900,6 @@
           </span>
           <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
         </button>
-
-        <div class="flex items-center gap-3 my-4">
-          <div class="h-px flex-1 bg-slate-800"></div>
-          <span class="text-[11px] text-slate-500 font-mono uppercase">or developer oauth</span>
-          <div class="h-px flex-1 bg-slate-800"></div>
-        </div>
-
-        <button onclick="loginWithGitHub()" class="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition">
-          <i data-lucide="github" class="w-4 h-4"></i>
-          <span>Continue with GitHub</span>
-        </button>
       </div>
     </div>
   </div>
@@ -1047,12 +1036,6 @@
       }
     }
 
-    function loginWithGitHub() {
-      currentUser = { name: '@zoniq-lead', role: 'SecOps Architect' };
-      updateAuthUI();
-      closeLoginModal();
-    }
-
     function handleLogout() {
       currentUser = null;
       localStorage.removeItem("connected_wallet");
@@ -1079,23 +1062,22 @@
     }
 
     function syncQuotaDisplay() {
-  // Targetkan ID sidebar dan ID badge (jika ada)
   const quotaBadge = document.getElementById('user-quota-badge');
   const creditsDisplay = document.getElementById('scan-credits-display');
   const progressBar = document.querySelector('.bg-gradient-to-r') || document.getElementById('quota-progress-bar');
 
-  // KONDISI 1: Belum Login
+  // KONDISI 1: Belum Login (Guest Free Tier)
   if (!currentUser) {
-    if (creditsDisplay) creditsDisplay.innerText = '0 / 0';
+    if (creditsDisplay) creditsDisplay.innerText = '1 / 1';
     if (quotaBadge) {
-      quotaBadge.innerText = 'Not Connected';
-      quotaBadge.className = 'text-slate-400 font-normal';
+      quotaBadge.innerText = 'Quota: 1 Free';
+      quotaBadge.className = 'text-emerald-400 font-mono text-xs';
     }
-    if (progressBar) progressBar.style.width = '0%';
+    if (progressBar) progressBar.style.width = '100%';
     return;
   }
 
-  // KONDISI 2: Sudah Login (Ambil kuota riil)
+  // KONDISI 2: Sudah Login
   const acc = (typeof getScanQuota === 'function') ? getScanQuota() : { isUnlimited: false, quota: 0, tier: 'free' };
 
   if (acc.isUnlimited) {
