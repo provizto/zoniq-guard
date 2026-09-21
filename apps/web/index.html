@@ -1704,5 +1704,39 @@ jobs:
       alert(`Attestation recorded successfully on ${chainName}!`);
     }
   </script>
+
+  <!-- ================= FOOTER COMPONENT ================= -->
+  <footer class="mt-16 border-t border-slate-800/80 bg-[#0B1120]/90 backdrop-blur text-slate-400 text-xs py-8 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <!-- Brand & Copyright -->
+      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+        <div class="flex items-center gap-2 font-semibold text-slate-200">
+          <span class="w-5 h-5 rounded bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold">Z</span>
+          <span class="tracking-wide">Zoniq-Guard</span>
+        </div>
+        <span class="hidden sm:inline text-slate-700">&bull;</span>
+        <p class="text-slate-400 text-[11px] sm:text-xs">
+          &copy; 2026 <span class="text-slate-200 font-medium">Zoniq-Guard</span> by Zoniqfi Digital Core Labs. All rights reserved.
+        </p>
+      </div>
+
+      <!-- Protocol Badges & Engine Status -->
+      <div class="flex items-center gap-4 text-[11px]">
+        <div class="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-slate-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Core Engine Active</span>
+        </div>
+        <span class="text-slate-600 hidden sm:inline">|</span>
+        <div class="text-slate-400 flex items-center gap-2">
+          <span>Solana SVM</span>
+          <span class="text-slate-600">&bull;</span>
+          <span>Arbitrum EVM</span>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+  <!-- ================= END FOOTER ================= -->
 </body>
 </html>
