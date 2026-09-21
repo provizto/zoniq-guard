@@ -400,14 +400,6 @@
             <h1 class="text-xl sm:text-2xl font-bold text-white">Smart Contract Security Scanner</h1>
             <p class="text-xs text-slate-400">Upload contract, paste code, or link public GitHub repository.</p>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="loadTemplate('solana')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#14F195] border border-[#14F195]/30 font-medium transition">
-              Load Solana Demo
-            </button>
-            <button onclick="loadTemplate('arbitrum')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#28A0F0] border border-[#28A0F0]/30 font-medium transition">
-              Load Arbitrum Demo
-            </button>
-          </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -927,58 +919,8 @@
     let selectedVulnIndex = 0;
     let currentFilter = 'all';
 
-    const SAMPLE_PAYFI_VAULT = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
-
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract VendorPayFiVault is ReentrancyGuard, Ownable {
-    mapping(address => uint256) public vendorBalances;
-
-    constructor() Ownable(msg.sender) {}
-
-    function withdrawVendorBalance() external nonReentrant {
-        uint256 balance = vendorBalances[msg.sender];
-        require(balance > 0, "No balance available");
-
-        vendorBalances[msg.sender] = 0;
-
-        (bool success, ) = msg.sender.call{value: balance}("");
-        require(success, "Transfer execution failed");
-    }
-}`;
-
-    const SAMPLE_SOLANA = `use anchor_lang::prelude::*;
-declare_id!("Zon1qCoreSecureProtocol1111111111111111111");
-
-#[program]
-pub mod zoniq_vault {
-    use super::*;
-    pub fn withdraw_treasury(ctx: Context<WithdrawTreasury>, amount: u64) -> Result<()> {
-        let vault = &mut ctx.accounts.vault;
-        require!(ctx.accounts.authority.key() == vault.admin, VaultError::Unauthorized);
-        **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-        **ctx.accounts.recipient.to_account_info().try_borrow_mut_lamports()? += amount;
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct WithdrawTreasury<'info> {
-    #[account(
-        mut,
-        has_one = authority @ ErrorCode::Unauthorized
-    )]
-    pub vault: Account<'info, VaultData>,
-    pub authority: Signer<'info>,
-    #[account(mut)]
-    pub recipient: AccountInfo<'info>,
-}
-#[account]
-pub struct VaultData { pub admin: Pubkey, pub total_locked: u64 }
-#[error_code]
-pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
+    const SAMPLE_PAYFI_VAULT = "";
+    const SAMPLE_SOLANA = "";
 
     const VULNERABILITIES = [];
 
@@ -1145,23 +1087,6 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
     function handleChainChange(selectedChain) {
       currentFilter = selectedChain;
       renderVulnerabilityList();
-    }
-
-    function loadTemplate(type) {
-      const codeArea = document.getElementById('smart-contract-code');
-      const filename = document.getElementById('editor-filename');
-      if (!codeArea) return;
-
-      if (type === 'solana') {
-        codeArea.value = SAMPLE_SOLANA;
-        if (filename) filename.innerText = "zoniq_vault.rs";
-        autoDetectEcosystem(SAMPLE_SOLANA, "zoniq_vault.rs");
-      } else {
-        codeArea.value = SAMPLE_PAYFI_VAULT;
-        if (filename) filename.innerText = "VendorPayFiVault.sol";
-        autoDetectEcosystem(SAMPLE_PAYFI_VAULT, "VendorPayFiVault.sol");
-      }
-      switchInputMode('paste');
     }
 
     function triggerSampleAudit() {
