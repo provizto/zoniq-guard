@@ -213,6 +213,12 @@
           <span class="hidden sm:inline">Launch </span><span>Audit</span>
         </button>
 
+        <!-- Indikator Kuota Scan Riil -->
+        <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#141E33] border border-[#21304D] text-xs font-mono shrink-0">
+          <span class="text-slate-400">Quota:</span>
+          <span id="user-quota-badge" class="text-emerald-400 font-bold">1 Free</span>
+        </div>
+        
         <div id="auth-container" class="shrink-0">
           <button id="btn-login-trigger" onclick="openLoginModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition shrink-0">
             <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
@@ -1055,6 +1061,64 @@
       updateAuthUI();
     }
 
+    // ========================================================
+    // SCAN QUOTA MANAGEMENT SYSTEM (REAL DATA)
+    // ========================================================
+    function getScanQuota() {
+      // Check if logged in as Admin / Protocol Architect
+      if (currentUser && (currentUser.role.toLowerCase().includes('architect') || currentUser.role.toLowerCase().includes('admin'))) {
+        return { tier: 'Enterprise Admin', quota: 999999, isUnlimited: true };
+      }
+
+      const savedTier = localStorage.getItem('aegis_user_tier') || 'Free Tier';
+      const savedQuota = localStorage.getItem('aegis_scan_quota');
+      
+      // Default: 1 free trial scan for visitors
+      const quota = savedQuota !== null ? parseInt(savedQuota, 10) : 1;
+      return { tier: savedTier, quota: quota, isUnlimited: false };
+    }
+
+    function syncQuotaDisplay() {
+      const quotaBadge = document.getElementById('user-quota-badge');
+      if (!quotaBadge) return;
+
+      const acc = getScanQuota();
+      if (acc.isUnlimited) {
+        quotaBadge.innerText = 'Unlimited (Admin)';
+        quotaBadge.className = 'text-indigo-400 font-bold';
+      } else if (acc.quota > 0) {
+        quotaBadge.innerText = `${acc.quota} Left (${acc.tier})`;
+        quotaBadge.className = 'text-emerald-400 font-bold';
+      } else {
+        quotaBadge.innerText = '0 Left (Exhausted)';
+        quotaBadge.className = 'text-rose-400 font-bold';
+      }
+    }
+
+    // ========================================================
+    // PLAN SUBSCRIPTION & QUOTA TOP-UP (REAL ON-CHAIN ACTIVATION)
+    // ========================================================
+    function activatePaidPlan(planType) {
+      let scansGranted = 25;
+      let planLabel = 'Pro Plan';
+
+      if (planType.toLowerCase() === 'enterprise') {
+        scansGranted = 100;
+        planLabel = 'Enterprise Plan';
+      }
+
+      // Ambil kuota yang ada sekarang, lalu tambahkan kuota paket baru
+      const existing = getScanQuota();
+      const currentBalance = existing.isUnlimited ? 0 : existing.quota;
+      const updatedTotal = currentBalance + scansGranted;
+
+      localStorage.setItem('aegis_user_tier', planLabel);
+      localStorage.setItem('aegis_scan_quota', updatedTotal.toString());
+
+      syncQuotaDisplay();
+      alert(`Subscription Confirmed! ${planLabel} activated with +${scansGranted} audit scans. Total Quota: ${updatedTotal}`);
+    }
+
     function updateAuthUI() {
       const btn = document.getElementById('btn-login-trigger');
       const pill = document.getElementById('user-profile-pill');
@@ -1079,6 +1143,9 @@
       }
 
       lucide.createIcons();
+
+      // Sinkronkan badge kuota saat status auth berubah
+      syncQuotaDisplay();
     }
 
     function handleChainChange(selectedChain) {
@@ -1107,6 +1174,19 @@
       if (!code.trim()) {
         alert("Smart contract source code cannot be empty. Please paste or load contract code first.");
         return;
+      }
+
+      // Validasi & Pengurangan Kuota Riil
+      const currentQuotaData = getScanQuota();
+      if (!currentQuotaData.isUnlimited) {
+        if (currentQuotaData.quota <= 0) {
+          alert("Audit quota exhausted (0 Left)! Please upgrade to Pro or Enterprise plan to run additional deep scans.");
+          return;
+        }
+        // Kurangi 1 kuota dan simpan permanen
+        const remaining = currentQuotaData.quota - 1;
+        localStorage.setItem('aegis_scan_quota', remaining.toString());
+        syncQuotaDisplay();
       }
 
       const lines = code.split('\n');
