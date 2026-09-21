@@ -848,38 +848,30 @@
       <!-- ================= END SUBSCRIPTION PLANS ================= -->
     </main>
   
-  <!-- ================= FOOTER COMPONENT ================= -->
-    <footer class="mt-16 border-t border-slate-800/80 bg-[#0B1120]/90 backdrop-blur text-slate-400 text-xs py-8 px-4 sm:px-8">
-      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        
-        <!-- Brand & Copyright -->
-        <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
-          <div class="flex items-center gap-2 font-semibold text-slate-200">
-            <span class="w-5 h-5 rounded bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold">Z</span>
-            <span class="tracking-wide">Zoniq-Guard</span>
-          </div>
-          <span class="hidden sm:inline text-slate-700">&bull;</span>
-          <p class="text-slate-400 text-[11px] sm:text-xs">
-            &copy; 2026 <span class="text-slate-200 font-medium">Zoniq-Guard</span> by Zoniqfi Digital Core Labs. All rights reserved.
-          </p>
-        </div>
+  <!-- FOOTER RAMPING & NON-STICKY -->
+  <footer class="w-full bg-[#0B101B] border-t border-[#1B273F] py-3 px-4 sm:px-6 text-xs text-slate-400 mt-auto">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+    
+    <!-- Sisi Kiri: Brand & Copyright -->
+    <div class="flex items-center gap-2">
+      <div class="w-4 h-4 rounded bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-[10px]">Z</div>
+      <span class="font-semibold text-slate-300">Zoniq-Guard</span>
+      <span class="text-slate-600">•</span>
+      <span class="text-[11px] text-slate-400">© 2026 Zoniq-Guard by Zoniqfi Digital Core Labs. All rights reserved.</span>
+    </div>
 
-        <!-- Protocol Badges & Engine Status -->
-        <div class="flex items-center gap-4 text-[11px]">
-          <div class="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-slate-300">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Core Engine Active</span>
-          </div>
-          <span class="text-slate-600 hidden sm:inline">|</span>
-          <div class="text-slate-400 flex items-center gap-2">
-            <span>Solana SVM</span>
-            <span class="text-slate-600">&bull;</span>
-            <span>Arbitrum EVM</span>
-          </div>
-        </div>
-
+    <!-- Sisi Kanan: Status & Chain Info -->
+    <div class="flex items-center gap-3 text-[11px]">
+      <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 font-medium">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Core Engine Active</span>
       </div>
-    </footer>
+      <span class="text-slate-600 hidden sm:inline">|</span>
+      <span class="text-slate-400 hidden sm:inline">Solana SVM • Arbitrum EVM</span>
+    </div>
+
+  </div>
+</footer>
     <!-- ================= END FOOTER ================= -->
 
   </div>
@@ -1814,39 +1806,148 @@ jobs:
       alert(`Attestation recorded successfully on ${chainName}!`);
     }
 
-    // ==========================================
-// 💳 DIRECT WALLET-TO-WALLET SUBSCRIPTION PAYMENT (FULL EN)
+// ==========================================
+// 💳 SYNCED WALLET PAYMENT & ADMIN BYPASS CORE (FULL EN)
 // ==========================================
 const ADMIN_PAYMENT_WALLETS = {
-  // Replace with your Solana actual admin wallet addresses
   solana: "9bvD1899yYZCf2MKeuds59EXAGgVBwuFkrCS1Cgo3AhS",
-  
-  // Replace with your Arbitrum/EVM admin address
   evm: "0xc7ac22cbe2c96c308dafbec609025c03a713fe01"
 };
 
-// Plan pricing definitions
 const PLAN_PRICING = {
-  pro: { sol: 0.05, eth: 0.01, name: "Pro Security Plan" },
-  enterprise: { sol: 0.25, eth: 0.05, name: "Enterprise Audit Plan" }
+  pro: { sol: 0.05, eth: 0.01, name: "Pro Security Plan", scans: 25 },
+  enterprise: { sol: 0.25, eth: 0.05, name: "Enterprise Audit Plan", scans: 100 }
 };
 
+// Check and restore session on page load
+document.addEventListener("DOMContentLoaded", () => {
+  restoreSessionState();
+});
+
+function restoreSessionState() {
+  const currentTier = localStorage.getItem("user_tier") || "free";
+  const userWallet = localStorage.getItem("connected_wallet");
+  
+  if (userWallet) {
+    // Re-verify if the connected address is admin
+    if (isAdminWallet(userWallet)) {
+      activateAdminPrivileges(userWallet);
+    } else {
+      updateConnectButtonUI(userWallet);
+      updateTierBadgeUI(currentTier);
+    }
+  }
+}
+
+// 🛡️ ADMIN VERIFICATION CHECK
+function isAdminWallet(address) {
+  if (!address) return false;
+  const cleanAddr = address.trim().toLowerCase();
+  return (
+    cleanAddr === ADMIN_PAYMENT_WALLETS.solana.toLowerCase() ||
+    cleanAddr === ADMIN_PAYMENT_WALLETS.evm.toLowerCase()
+  );
+}
+
+function activateAdminPrivileges(adminAddress) {
+  localStorage.setItem("user_tier", "enterprise");
+  localStorage.setItem("is_admin", "true");
+  localStorage.setItem("scan_credits", "unlimited");
+
+  updateConnectButtonUI(adminAddress, true);
+  updateTierBadgeUI("ENTERPRISE (ADMIN)");
+  console.log(`[AEGIS-CORE] Admin authenticated: ${adminAddress}. Access: UNLIMITED.`);
+}
+
+function updateConnectButtonUI(address, isAdmin = false) {
+  const btn = document.querySelector("button:has-text('Connect'), .connect-wallet-btn") || 
+              document.getElementById("btn-connect-wallet");
+  if (btn) {
+    const shortAddr = address.slice(0, 4) + "..." + address.slice(-4);
+    const badgeColor = isAdmin ? "bg-purple-400" : "bg-emerald-400";
+    const roleText = isAdmin ? " [ADMIN]" : "";
+    
+    btn.innerHTML = `<span class="w-2 h-2 rounded-full ${badgeColor} inline-block mr-1"></span> ${shortAddr}${roleText}`;
+    btn.classList.replace("bg-indigo-600", "bg-slate-800");
+  }
+}
+
+function updateTierBadgeUI(tier) {
+  const badgeEl = document.getElementById("user-tier-indicator");
+  if (badgeEl) {
+    badgeEl.innerText = tier.toUpperCase();
+    badgeEl.className = tier === 'free' ? 'text-slate-400' : 'text-emerald-400 font-bold';
+  }
+}
+
+// Direct wallet connection (Navbar button)
+async function connectWalletHandler() {
+  const chain = document.getElementById("global-chain-selector")?.value || "solana";
+
+  try {
+    if (chain === "solana" || (window.solana && window.solana.isConnected)) {
+      if (!window.solana) {
+        alert("Phantom Wallet not detected! Please install or unlock Phantom extension.");
+        return;
+      }
+      const resp = await window.solana.connect();
+      const pubkey = resp.publicKey.toString();
+      handleWalletAuthenticated(pubkey);
+    } else {
+      if (!window.ethereum) {
+        alert("Web3 Wallet not detected! Please install MetaMask or Rabby extension.");
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      handleWalletAuthenticated(accounts[0]);
+    }
+  } catch (err) {
+    console.error("Wallet connection failed:", err);
+  }
+}
+
+function handleWalletAuthenticated(address) {
+  localStorage.setItem("connected_wallet", address);
+  
+  if (isAdminWallet(address)) {
+    activateAdminPrivileges(address);
+    alert(`Welcome back, Protocol Architect!\nAdmin privileges unlocked. Unlimited deep audit scans enabled.`);
+  } else {
+    updateConnectButtonUI(address);
+    alert(`Wallet Connected:\n${address}`);
+  }
+}
+
+// Direct subscription payment
 async function paySubscriptionDirect(planTier) {
   const plan = PLAN_PRICING[planTier] || PLAN_PRICING.pro;
   const chain = document.getElementById("global-chain-selector")?.value || "solana";
 
   try {
+    // ------------------------------------------
+    // 1. SOLANA INTEGRATION (PHANTOM)
+    // ------------------------------------------
     if (chain === "solana" || (window.solana && window.solana.isConnected)) {
-      // --- SOLANA DEVNET / MAINNET (PHANTOM) ---
       if (!window.solana) {
         alert("Phantom Wallet not detected! Please install or unlock Phantom.");
         return;
       }
+
       const resp = await window.solana.connect();
-      const userPubkey = resp.publicKey;
+      const userPubkey = resp.publicKey.toString();
+
+      // ADMIN BYPASS
+      if (isAdminWallet(userPubkey)) {
+        activateAdminPrivileges(userPubkey);
+        alert("Admin wallet recognized! You have full unlimited access without payment.");
+        return;
+      }
+
+      localStorage.setItem("connected_wallet", userPubkey);
+      updateConnectButtonUI(userPubkey);
 
       const connection = new solanaWeb3.Connection(
-        solanaWeb3.clusterApiUrl("devnet"),
+        solanaWeb3.clusterApiUrl("devnet"), // Change to "mainnet-beta" for production
         "confirmed"
       );
 
@@ -1855,49 +1956,72 @@ async function paySubscriptionDirect(planTier) {
 
       const transaction = new solanaWeb3.Transaction().add(
         solanaWeb3.SystemProgram.transfer({
-          fromPubkey: userPubkey,
+          fromPubkey: resp.publicKey,
           toPubkey: recipient,
           lamports: lamports
         })
       );
 
-      transaction.feePayer = userPubkey;
+      transaction.feePayer = resp.publicKey;
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
 
       const { signature } = await window.solana.signAndSendTransaction(transaction);
       await connection.confirmTransaction(signature, "confirmed");
 
-      alert(`Payment Successful!\nPlan: ${plan.name}\nTx Signature: ${signature}\nFunds transferred directly to treasury.`);
-      
-    } else {
-      // --- EVM / ARBITRUM SEPOLIA (METAMASK) ---
-      if (!window.ethereum) {
-        alert("Web3 Wallet not detected! Please install MetaMask.");
-        return;
-      }
-
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const sender = accounts[0];
-      const weiAmount = "0x" + BigInt(Math.round(plan.eth * 1e18)).toString(16);
-
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: sender,
-            to: ADMIN_PAYMENT_WALLETS.evm,
-            value: weiAmount
-          }
-        ]
-      });
-
-      alert(`Payment Successful!\nPlan: ${plan.name}\nTx Hash: ${txHash}\nFunds transferred directly to treasury.`);
+      activateUserPlan(planTier, signature);
+      return;
     }
+
+    // ------------------------------------------
+    // 2. EVM / ARBITRUM INTEGRATION (METAMASK)
+    // ------------------------------------------
+    if (!window.ethereum) {
+      alert("Web3 Wallet not detected! Please install MetaMask.");
+      return;
+    }
+
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const sender = accounts[0];
+
+    // ADMIN BYPASS
+    if (isAdminWallet(sender)) {
+      activateAdminPrivileges(sender);
+      alert("Admin wallet recognized! You have full unlimited access without payment.");
+      return;
+    }
+
+    localStorage.setItem("connected_wallet", sender);
+    updateConnectButtonUI(sender);
+
+    const weiAmount = "0x" + BigInt(Math.round(plan.eth * 1e18)).toString(16);
+
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{
+        from: sender,
+        to: ADMIN_PAYMENT_WALLETS.evm,
+        value: weiAmount
+      }]
+    });
+
+    activateUserPlan(planTier, txHash);
+
   } catch (err) {
     console.error("Payment error:", err);
-    alert("Payment rejected or failed: " + (err.message || err));
+    alert("Transaction rejected or failed: " + (err.message || err));
   }
+}
+
+function activateUserPlan(planTier, txRef) {
+  const plan = PLAN_PRICING[planTier];
+  localStorage.setItem("user_tier", planTier);
+  localStorage.setItem("scan_credits", plan.scans);
+  localStorage.setItem("last_payment_tx", txRef);
+
+  updateTierBadgeUI(planTier);
+
+  alert(`Payment Confirmed!\n\nTier: ${plan.name}\nTx Reference: ${txRef.slice(0, 10)}...\nAudit Credits: ${plan.scans} Scans\n\nYour account has been upgraded to ${planTier.toUpperCase()}!`);
 }
   </script>
 </body>
