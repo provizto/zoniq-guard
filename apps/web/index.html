@@ -1817,11 +1817,19 @@ jobs:
           );
 
           tx.feePayer = userPubkey;
-          const { blockhash } = await connection.getLatestBlockhash();
+          const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
           tx.recentBlockhash = blockhash;
 
-          const signed = await window.solana.signAndSendTransaction(tx);
-          const signature = signed.signature;
+          // Minta tanda tangan Phantom
+          const signedTx = await window.solana.signTransaction(tx);
+
+          // Kirim raw transaction langsung ke cluster devnet
+          const signature = await connection.sendRawTransaction(signedTx.serialize());
+          await connection.confirmTransaction({
+            blockhash,
+            lastValidBlockHeight,
+            signature
+          }, 'confirmed');
 
           updateAttestationUI(
             signature, 
