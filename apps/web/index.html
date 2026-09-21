@@ -886,7 +886,7 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      loadTemplate('arbitrum');
+      initBlankEditor(); // Buat editor kosong saat awal buka
       loadSavedRuleConfigs();
       syncAllModules();
     });
@@ -990,6 +990,70 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
         loadTemplate('arbitrum');
       }
       renderVulnerabilityList();
+    }
+
+    // ===== FUNGSI KOSONGKAN EDITOR & AUTO DETECT (BARU) =====
+    function initBlankEditor() {
+      const codeArea = document.getElementById('smart-contract-code');
+      const filename = document.getElementById('editor-filename');
+      const linesEl = document.getElementById('editor-lines');
+      
+      if (codeArea) {
+        codeArea.value = '';
+        codeArea.placeholder = '// Paste your Solidity (.sol) or Rust/Anchor (.rs) smart contract code here...\n// Ecosystem and file type will be automatically detected.';
+        
+        codeArea.oninput = () => {
+          autoDetectEcosystem(codeArea.value);
+        };
+      }
+      if (filename) filename.innerText = "UntitledContract";
+      if (linesEl) linesEl.innerText = "0 lines";
+    }
+
+    function autoDetectEcosystem(codeText, explicitName = null) {
+      const filename = document.getElementById('editor-filename');
+      const linesEl = document.getElementById('editor-lines');
+      const chainSelector = document.getElementById('global-chain-selector');
+
+      if (linesEl) {
+        const lineCount = codeText.trim() ? codeText.split('\n').length : 0;
+        linesEl.innerText = `${lineCount} lines`;
+      }
+
+      if (!codeText.trim()) {
+        if (filename && !explicitName) filename.innerText = "UntitledContract";
+        return;
+      }
+
+      const isSolana = (explicitName && explicitName.endsWith('.rs')) ||
+        codeText.includes('anchor_lang') || 
+        codeText.includes('#[program]') || 
+        codeText.includes('declare_id!');
+
+      if (isSolana) {
+        if (filename && !explicitName) filename.innerText = explicitName || "contract.rs";
+        if (chainSelector) chainSelector.value = "solana";
+      } else {
+        if (filename && !explicitName) filename.innerText = explicitName || "Contract.sol";
+        if (chainSelector) chainSelector.value = "arbitrum";
+      }
+    }
+    // ========================================================
+
+    function loadTemplate(type) {
+      const codeArea = document.getElementById('smart-contract-code');
+      const filename = document.getElementById('editor-filename');
+      if (!codeArea) return;
+
+      if (type === 'solana') {
+        codeArea.value = SAMPLE_SOLANA;
+        if (filename) filename.innerText = "zoniq_vault.rs";
+      } else {
+        codeArea.value = SAMPLE_PAYFI_VAULT;
+        if (filename) filename.innerText = "VendorPayFiVault.sol";
+      }
+      const linesEl = document.getElementById('editor-lines');
+      if (linesEl) linesEl.innerText = `${codeArea.value.split('\n').length} lines`;
     }
 
     function loadTemplate(type) {
@@ -1484,12 +1548,16 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
         const codeText = await res.text();
 
         const codeArea = document.getElementById('smart-contract-code');
+        const filenameEl = document.getElementById('editor-filename');
+        
+        const extractedFilename = input.split('/').pop().split('?')[0] || 'Contract';
+
         if (codeArea) {
           codeArea.value = codeText;
-          const linesEl = document.getElementById('editor-lines');
-          if (linesEl) linesEl.innerText = `${codeText.split('\n').length} lines`;
+          if (filenameEl) filenameEl.innerText = extractedFilename;
+          autoDetectEcosystem(codeText, extractedFilename);
           switchInputMode('paste');
-          alert('Smart contract successfully loaded from GitHub!');
+          alert(`Smart contract (${extractedFilename}) successfully loaded from GitHub!`);
         }
       } catch (err) {
         alert(err.message);
@@ -1508,8 +1576,7 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
         if (codeArea) {
           codeArea.value = content;
           if (filenameEl) filenameEl.innerText = file.name;
-          const linesEl = document.getElementById('editor-lines');
-          if (linesEl) linesEl.innerText = `${content.split('\n').length} lines`;
+          autoDetectEcosystem(content, file.name);
           switchInputMode('paste');
         }
       };
