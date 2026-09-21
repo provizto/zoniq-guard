@@ -20,7 +20,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.post('/api/audit', (req, res) => {
-  const { code, chain, filename, activeRules } = req.body;
+  // 1. Ambil userTier dari payload request (default: 'free' jika tidak dikirim)
+  const { code, chain, filename, activeRules, userTier = 'free' } = req.body;
 
   if (!code || typeof code !== 'string') {
     return res.status(400).json({
@@ -58,13 +59,21 @@ app.post('/api/audit', (req, res) => {
       });
     }
 
-    // Filter issues based on activeRules toggles from UI
     let filteredIssues = auditResult.issues || [];
+
+    // 2. LOGIKA TIER: Gating fitur Reentrancy khusus Enterprise
+    // Jika bukan Enterprise, matikan aturan Reentrancy (AEGIS-ARB-001)
+    const isEnterprise = userTier.toLowerCase() === 'enterprise';
+    if (!isEnterprise) {
+      filteredIssues = filteredIssues.filter(issue => issue.id !== 'AEGIS-ARB-001');
+    }
+
+    // 3. Filter issues berdasarkan activeRules toggle dari UI dashboard
     if (activeRules) {
       filteredIssues = filteredIssues.filter(issue => {
         if (issue.id === 'AEGIS-SOL-001') return activeRules.sol001 ?? true;
         if (issue.id === 'AEGIS-SOL-002') return activeRules.sol002 ?? true;
-        if (issue.id === 'AEGIS-ARB-001') return activeRules.arb001 ?? true;
+        if (issue.id === 'AEGIS-ARB-001') return isEnterprise && (activeRules.arb001 ?? true);
         if (issue.id === 'AEGIS-ARB-002') return activeRules.arb002 ?? true;
         return true;
       });
@@ -74,6 +83,7 @@ app.post('/api/audit', (req, res) => {
       success: true,
       targetFile: filename || (selectedChain === 'solana' ? 'lib.rs' : 'Contract.sol'),
       chain: selectedChain,
+      tierApplied: userTier,
       totalIssues: filteredIssues.length,
       issues: filteredIssues,
       scannedAt: new Date().toISOString()

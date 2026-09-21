@@ -1126,10 +1126,34 @@
         try { activeRules = JSON.parse(savedConfig); } catch (e) {}
       }
 
-      await new Promise(r => setTimeout(r, 600));
+      // 1. Ambil tier pengguna (Free, Pro, Enterprise)
+      const currentTier = localStorage.getItem('user_tier') || 'free';
+      let detectedIssues = [];
 
-      const detectedIssues = [];
-      const lines = code.split('\n');
+      // 2. Kirim request ke endpoint /api/audit
+      try {
+        const response = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: code,
+            chain: chain,
+            filename: filename,
+            activeRules: activeRules,
+            userTier: currentTier
+          })
+        });
+
+        const data = await response.json();
+        if (data.success && Array.isArray(data.issues)) {
+          detectedIssues = data.issues;
+        } else {
+          throw new Error(data.error || "Engine scan rejected");
+        }
+      } catch (err) {
+        console.error("API Audit error:", err);
+        // Jika server mati / gagal, fallback otomatis ke array kosong atau deteksi bawaan
+      }
 
       if (chain === 'solana') {
         if (activeRules.sol001 && /pub\s+authority\s*:\s*AccountInfo/i.test(code)) {
