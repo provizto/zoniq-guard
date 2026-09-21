@@ -1683,7 +1683,7 @@
     }
 
     function copyCiCdYaml() {
-      const yamlContent = `name: Zoniqfi Aegis Security Gate
+  const yamlContent = `name: Zoniq Guard Security Gate
 on: [push, pull_request]
 
 jobs:
@@ -1691,23 +1691,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run Aegis Multi-Chain Analyzer
-        uses: zoniqfi/aegis-action@v2
+      - name: Run Zoniq Guard Analyzer
+        uses: zoniq/guard-action@v2
         with:
-          api-key: \${{ secrets.AEGIS_API_KEY }}
+          api-key: \${{ secrets.GUARD_API_KEY }}
           fail-on-severity: 'CRITICAL,HIGH'
           solana-programs: './programs/**/src/lib.rs'
           arbitrum-contracts: './contracts/**/*.sol'`;
 
-      navigator.clipboard.writeText(yamlContent).then(() => {
-        const btnText = document.getElementById('btn-copy-yaml-text');
-        if (btnText) {
-          const originalText = btnText.innerText;
-          btnText.innerText = "Copied!";
-          setTimeout(() => btnText.innerText = originalText, 1500);
-        }
-      });
+  navigator.clipboard.writeText(yamlContent).then(() => {
+    const btnText = document.getElementById('btn-copy-yaml-text');
+    if (btnText) {
+      const originalText = btnText.innerText;
+      btnText.innerText = "Copied!";
+      setTimeout(() => btnText.innerText = originalText, 1500);
     }
+  });
+}
 
     function exportAuditReport() {
   // Validasi: Cek apakah user sudah login atau wallet sudah terhubung
@@ -1721,7 +1721,7 @@ jobs:
   const findings = [...VULNERABILITIES];
   const filename = document.getElementById('editor-filename')?.innerText || 'contract';
   const reportPayload = {
-    platform: "Zoniqfi Guard Security Core",
+    platform: "Zoniq Guard Security Core",
     version: "2.4.0",
     targetFile: filename,
     timestamp: new Date().toISOString(),
