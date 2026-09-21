@@ -10,6 +10,10 @@
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Web3 Libraries for On-Chain Attestation -->
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   
   <!-- Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -193,7 +197,7 @@
         <!-- Dropdown Selector yang Lebih Ramping di HP -->
         <div class="relative">
           <select id="global-chain-selector" onchange="handleChainChange(this.value)" class="bg-[#141E33] border border-[#21304D] text-[11px] sm:text-xs rounded-lg px-2 sm:px-3 py-1.5 font-medium text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer max-w-[95px] sm:max-w-none">
-            <option value="all">⚡ Multi</option>
+            <option value="all">⚡ All Chains</option>
             <option value="solana">🟢 Solana</option>
             <option value="arbitrum">🔵 Arbitrum</option>
             <option value="base">🔵 Base</option>
@@ -419,7 +423,7 @@
             <p class="text-xs text-slate-400">Exploit analysis, impact traces, and patch recommendations.</p>
           </div>
           <div class="flex items-center gap-2.5">
-            <button onclick="generateProofOfAudit()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs text-white rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
+            <button onclick="executeRealAttestation()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs text-white rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
               <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
               <span>Attest Proof</span>
             </button>
@@ -638,11 +642,13 @@
                 <span id="cert-score-display" class="font-mono text-emerald-400 font-bold text-sm">100.0 / 100</span>
               </div>
               <div>
-                <span class="text-slate-400 block mb-0.5 font-medium">On-Chain Attestation Hash:</span>
-                <span id="cert-hash-display" class="font-mono text-indigo-300 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">
-                  0x7f29a0c3b889d1469e32a210984df9a1b429031c2e7b89d
-                </span>
-              </div>
+  <span class="text-slate-400 block mb-0.5 font-medium">On-Chain Attestation Hash:</span>
+  <div id="attestation-hash-display">
+    <span id="cert-hash-display" class="font-mono text-indigo-300 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">
+      0x7f29a0c3b889d1469e32a210984df9a1b429031c2e7b89d
+    </span>
+  </div>
+</div>
             </div>
           </div>
 
@@ -1576,6 +1582,126 @@ jobs:
       };
       localStorage.setItem('aegis_rule_configs', JSON.stringify(config));
       alert("Rule configurations saved successfully!");
+    }
+
+    // ========================================================
+    // ON-CHAIN ATTESTATION HANDLER (SOLANA DEVNET & ARBITRUM SEPOLIA)
+    // ========================================================
+
+    async function executeRealAttestation() {
+      const targetName = document.getElementById('cert-contract-name')?.innerText || 'VendorPayFiVault.sol';
+      const targetEco = document.getElementById('cert-target-chain')?.innerText || 'Arbitrum';
+      const score = document.getElementById('cert-score-display')?.innerText || '100';
+
+      const isSolana = targetEco.toLowerCase().includes('solana');
+
+      try {
+        if (isSolana) {
+          // --- SOLANA DEVNET (PHANTOM) ---
+          if (!window.solana || !window.solana.isPhantom) {
+            alert("Phantom Wallet not detected. Please install the Phantom browser extension.");
+            return;
+          }
+
+          const resp = await window.solana.connect();
+          const userPubkey = resp.publicKey;
+
+          const connection = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl("devnet"),
+            "confirmed"
+          );
+
+          const memoData = JSON.stringify({
+            protocol: "AEGIS-SECURITY",
+            target: targetName,
+            score: score,
+            timestamp: new Date().toISOString()
+          });
+
+          const MEMO_PROGRAM_ID = new solanaWeb3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
+
+          const tx = new solanaWeb3.Transaction().add(
+            new solanaWeb3.TransactionInstruction({
+              keys: [{ pubkey: userPubkey, isSigner: true, isWritable: true }],
+              programId: MEMO_PROGRAM_ID,
+              data: new TextEncoder().encode(memoData)
+            })
+          );
+
+          tx.feePayer = userPubkey;
+          const { blockhash } = await connection.getLatestBlockhash();
+          tx.recentBlockhash = blockhash;
+
+          const signed = await window.solana.signAndSendTransaction(tx);
+          const signature = signed.signature;
+
+          updateAttestationUI(
+            signature, 
+            `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+            "Solana Devnet"
+          );
+
+        } else {
+          // --- ARBITRUM SEPOLIA (METAMASK) ---
+          if (!window.ethereum) {
+            alert("Web3 Wallet not detected. Please install MetaMask or another EVM wallet.");
+            return;
+          }
+
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = await provider.getSigner();
+
+          // Enforce Arbitrum Sepolia Network (Chain ID: 421614 / 0x66eee)
+          const network = await provider.getNetwork();
+          if (Number(network.chainId) !== 421614) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x66eee" }]
+              });
+            } catch (switchError) {
+              alert("Please switch your network to Arbitrum Sepolia in your wallet.");
+              return;
+            }
+          }
+
+          const memoText = `AEGIS-PROOF:${targetName}:${score}:${Date.now()}`;
+          const hexData = ethers.hexlify(ethers.toUtf8Bytes(memoText));
+
+          const tx = await signer.sendTransaction({
+            to: await signer.getAddress(),
+            value: 0n,
+            data: hexData
+          });
+
+          updateAttestationUI(
+            tx.hash,
+            `https://sepolia.arbiscan.io/tx/${tx.hash}`,
+            "Arbitrum Sepolia"
+          );
+        }
+      } catch (err) {
+        console.error("Attestation failed:", err);
+        alert("Attestation failed: " + (err.message || err));
+      }
+    }
+
+    function updateAttestationUI(txHash, explorerUrl, chainName) {
+      const hashContainer = document.getElementById('attestation-hash-display');
+      if (hashContainer) {
+        hashContainer.innerHTML = `
+          <div class="space-y-2">
+            <span class="font-mono text-emerald-400 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">${txHash}</span>
+            <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" 
+               class="px-2.5 py-1.5 bg-indigo-600/30 border border-indigo-500/50 hover:bg-indigo-600/50 text-indigo-300 rounded-lg text-xs transition inline-flex items-center gap-1.5">
+              <span>View On-Chain Proof (${chainName})</span> &nearr;
+            </a>
+          </div>
+        `;
+      }
+      switchTab('proof');
+      alert(`Attestation recorded successfully on ${chainName}!`);
     }
   </script>
 </body>
