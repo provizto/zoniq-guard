@@ -81,20 +81,26 @@
 <body class="bg-[#0B0F17] text-slate-100 font-sans antialiased h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
 
   <!-- SIDEBAR NAVIGATION -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-[#0E1524] border-r border-[#1B273F] flex flex-col justify-between shrink-0 transition-transform duration-300 -translate-x-full md:relative md:translate-x-0">
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0E1524] border-r border-[#1B273F] flex flex-col justify-between shrink-0 transition-transform duration-300 -translate-x-full md:relative md:translate-x-0">
     <div>
       <!-- Brand Logo Header -->
-      <div class="h-16 flex items-center px-5 border-b border-[#1B273F] gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
-          <i data-lucide="shield-check" class="w-5 h-5 text-white stroke-[2.2]"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold tracking-tight text-white text-base">GUARD</span>
-            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold">Core v2.4</span>
+      <div class="h-16 flex items-center justify-between px-5 border-b border-[#1B273F]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <i data-lucide="shield-check" class="w-5 h-5 text-white stroke-[2.2]"></i>
           </div>
-          <p class="text-[11px] text-slate-400 font-medium">Zoniqfi Security Suite</p>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold tracking-tight text-white text-base">GUARD</span>
+              <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold">Core v2.4</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium">Zoniqfi Security Suite</p>
+          </div>
         </div>
+        <!-- Close Button (Mobile only) -->
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
 
       <!-- Navigation Links -->
@@ -162,50 +168,50 @@
     </div>
   </aside>
 
+  <!-- BACKDROP MOBILE SIDEBAR -->
+  <div id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
   <!-- MAIN CONTENT WRAPPER -->
   <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
     
     <!-- TOP HEADER -->
-    <header class="h-16 bg-[#0E1524] border-b border-[#1B273F] flex items-center justify-between px-6 shrink-0 z-20">
-      <div class="flex items-center gap-3">
-        <!-- Tombol Menu Hamburger (Khusus Layar HP) -->
-        <button type="button" onclick="toggleMobileSidebar()" class="md:hidden p-2 -ml-1 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition" aria-label="Toggle Menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
+    <header class="h-16 bg-[#0E1524] border-b border-[#1B273F] flex items-center justify-between px-3 sm:px-6 shrink-0 z-20">
+      <!-- Sisi Kiri: Hamburger + Logo + Chain Selector -->
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button type="button" onclick="toggleMobileSidebar()" class="md:hidden p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition shrink-0" aria-label="Toggle Menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141E33] border border-[#21304D] text-xs font-semibold text-slate-200">
-          <div class="w-5 h-5 rounded bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold">Z</div>
-          <span>Zoniqfi Core Labs</span>
+
+        <div class="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-[#141E33] border border-[#21304D] text-xs font-semibold text-slate-200 shrink-0">
+          <div class="w-5 h-5 rounded bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-xs">Z</div>
+          <span class="hidden sm:inline">Zoniqfi Core Labs</span>
         </div>
         
-        <span class="text-slate-600 text-sm">/</span>
+        <span class="text-slate-600 text-sm hidden sm:inline">/</span>
 
-        <div class="relative">
-          <select id="global-chain-selector" onchange="handleChainChange(this.value)" class="bg-[#141E33] border border-[#21304D] text-xs rounded-lg px-3 py-1.5 font-medium text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
-            <option value="all">⚡ Multi-Chain Analysis</option>
-            <option value="solana">🟢 Solana (SVM Anchor)</option>
-            <option value="arbitrum">🔵 Arbitrum Nitro (L2 EVM)</option>
-            <option value="base">🔵 Base (OP Stack)</option>
-            <option value="polygon">🟣 Polygon PoS</option>
-            <option value="ethereum">⚪ Ethereum Mainnet</option>
+        <div class="relative min-w-0">
+          <select id="global-chain-selector" onchange="handleChainChange(this.value)" class="bg-[#141E33] border border-[#21304D] text-xs rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 font-medium text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer truncate max-w-[120px] sm:max-w-none">
+            <option value="all">⚡ Multi-Chain</option>
+            <option value="solana">🟢 Solana</option>
+            <option value="arbitrum">🔵 Arbitrum</option>
+            <option value="base">🔵 Base</option>
+            <option value="polygon">🟣 Polygon</option>
+            <option value="ethereum">⚪ Ethereum</option>
           </select>
         </div>
       </div>
 
-      <!-- RIGHT ACTIONS HEADER (RESPONSIF MOBILE) -->
-      <div class="flex items-center gap-1.5 sm:gap-3">
-        <!-- Tombol Launch Audit (Ringkas di HP) -->
-        <button onclick="switchTab('scanner')" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all shrink-0">
+      <!-- Sisi Kanan: Launch Audit & Connect / Sign In -->
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <button onclick="switchTab('scanner')" class="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all shrink-0">
           <i data-lucide="zap" class="w-3.5 h-3.5 fill-current"></i>
-          <span class="hidden sm:inline">Launch</span> <span>Audit</span>
+          <span class="hidden sm:inline">Launch </span><span>Audit</span>
         </button>
 
         <div class="h-5 sm:h-6 w-px bg-slate-800 mx-0.5 sm:mx-1 shrink-0"></div>
 
-        <!-- Auth / Connect Wallet Container -->
         <div id="auth-container" class="shrink-0">
-          <button id="btn-login-trigger" onclick="openLoginModal()" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition shrink-0">
+          <button id="btn-login-trigger" onclick="openLoginModal()" class="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition shrink-0">
             <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
             <span class="hidden sm:inline">Connect / </span><span>Sign In</span>
           </button>
@@ -214,7 +220,7 @@
             <div class="flex items-center gap-1.5 sm:gap-2.5 pl-1 pr-2 sm:pr-3 py-1 bg-[#141E33] border border-[#21304D] rounded-full cursor-pointer">
               <div id="user-avatar-badge" class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-500 text-[10px] font-bold flex items-center justify-center text-white shrink-0">ZF</div>
               <div class="text-left">
-                <span id="user-display-name" class="text-xs font-semibold block leading-tight text-slate-200 font-mono max-w-[70px] sm:max-w-none truncate">0x7a...4b12</span>
+                <span id="user-display-name" class="text-xs font-semibold block leading-tight text-slate-200 font-mono max-w-[65px] sm:max-w-none truncate">0x7a...4b12</span>
               </div>
               <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
             </div>
@@ -234,7 +240,7 @@
     </header>
 
     <!-- VIEWS -->
-    <main class="flex-1 overflow-y-auto bg-[#0B0F17] p-6 text-slate-200" id="main-viewport">
+    <main class="flex-1 overflow-y-auto bg-[#0B0F17] p-4 sm:p-6 text-slate-200" id="main-viewport">
 
       <!-- ================= PAGE 1: DASHBOARD OVERVIEW ================= -->
       <div id="page-dashboard" class="space-y-6 max-w-7xl mx-auto">
@@ -309,17 +315,17 @@
 
       <!-- ================= PAGE 2: AUDIT SCANNER HUB ================= -->
       <div id="page-scanner" class="hidden space-y-6 max-w-7xl mx-auto">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-white">Smart Contract Security Scanner</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-white">Smart Contract Security Scanner</h1>
             <p class="text-xs text-slate-400">Upload contract, paste code, or link public GitHub repository.</p>
           </div>
           <div class="flex items-center gap-2">
             <button onclick="loadTemplate('solana')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#14F195] border border-[#14F195]/30 font-medium transition">
-              Load Solana (Anchor)
+              Load Solana
             </button>
             <button onclick="loadTemplate('arbitrum')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-[#28A0F0] border border-[#28A0F0]/30 font-medium transition">
-              Load Arbitrum (Solidity)
+              Load Arbitrum
             </button>
           </div>
         </div>
@@ -339,7 +345,7 @@
                   Upload File
                 </button>
               </div>
-              <span class="text-[11px] text-slate-400 font-mono pr-2">Multi-Input Mode</span>
+              <span class="text-[11px] text-slate-400 font-mono pr-2 hidden sm:inline">Multi-Input</span>
             </div>
 
             <!-- Code Editor Box -->
@@ -357,8 +363,8 @@
               <textarea id="smart-contract-code" rows="16" class="w-full bg-[#0B0F17] text-slate-200 font-mono text-xs p-4 focus:outline-none resize-none leading-relaxed border-0" spellcheck="false"></textarea>
 
               <div class="bg-[#161F30] px-4 py-2.5 border-t border-[#1E293B] flex items-center justify-between">
-                <span class="text-xs text-slate-400 font-medium">Ready for In-Browser AST Analysis</span>
-                <button onclick="startAuditScan()" id="btn-start-scan" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold tracking-wide shadow-md flex items-center gap-2 transition">
+                <span class="text-xs text-slate-400 font-medium">Ready for In-Browser Analysis</span>
+                <button onclick="startAuditScan()" id="btn-start-scan" class="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold tracking-wide shadow-md flex items-center gap-2 transition">
                   <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Start Deep Scan
                 </button>
               </div>
@@ -395,7 +401,7 @@
               <div class="bg-[#121A2B] px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2 font-mono text-slate-300">
                   <i data-lucide="terminal" class="w-3.5 h-3.5 text-indigo-400"></i>
-                  <span>Scanner Execution Pipeline</span>
+                  <span>Execution Pipeline</span>
                 </div>
                 <div id="scan-spinner" class="hidden flex items-center gap-1.5 text-[11px] text-indigo-400 font-mono">
                   <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Scanning...
@@ -413,9 +419,9 @@
 
       <!-- ================= PAGE 3: VULNERABILITY INSPECTOR ================= -->
       <div id="page-inspector" class="hidden space-y-6 max-w-7xl mx-auto">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-white">Vulnerability Findings & Remediations</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-white">Vulnerability Findings & Remediations</h1>
             <p class="text-xs text-slate-400">Exploit analysis, impact traces, and patch recommendations.</p>
           </div>
           <div class="flex items-center gap-2.5">
@@ -482,12 +488,12 @@
 
       <!-- ================= PAGE 4: CI/CD & GITHUB ================= -->
       <div id="page-cicd" class="hidden space-y-6 max-w-7xl mx-auto">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-white tracking-tight">Automated CI/CD Security Gates</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Automated CI/CD Security Gates</h1>
             <p class="text-xs text-slate-400">Block vulnerable Pull Requests before deployment on Solana or Arbitrum mainnet.</p>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+          <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 w-fit">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> GitHub Webhook Active
           </span>
         </div>
@@ -571,9 +577,9 @@
 
       <!-- ================= PAGE 5: PROOF OF AUDIT CERTIFICATES ================= -->
       <div id="page-proof" class="hidden space-y-6 max-w-5xl mx-auto">
-        <div class="flex items-center justify-between no-print">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
           <div>
-            <h1 class="text-2xl font-bold text-white">Cryptographic Proof of Audit</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-white">Cryptographic Proof of Audit</h1>
             <p class="text-xs text-slate-400">Verifiable on-chain attestation certificate for dApp releases.</p>
           </div>
           <div class="flex items-center gap-2">
@@ -586,23 +592,23 @@
           </div>
         </div>
 
-        <div id="audit-certificate-card" class="bg-gradient-to-b from-[#131C30] via-[#0E1526] to-[#0A0E1A] border-2 border-[#263756] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden text-slate-200">
+        <div id="audit-certificate-card" class="bg-gradient-to-b from-[#131C30] via-[#0E1526] to-[#0A0E1A] border-2 border-[#263756] rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden text-slate-200">
           <div class="absolute right-[-40px] bottom-[-40px] opacity-[0.03] pointer-events-none text-white">
             <i data-lucide="shield-check" class="w-96 h-96"></i>
           </div>
 
-          <div class="flex items-start justify-between border-b border-slate-800 pb-6 relative z-10">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between border-b border-slate-800 pb-6 gap-4 relative z-10">
             <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i data-lucide="award" class="w-7 h-7 text-white stroke-[2.2]"></i>
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+                <i data-lucide="award" class="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.2]"></i>
               </div>
               <div>
-                <span class="text-[11px] font-mono tracking-widest uppercase text-indigo-400 font-bold block">SECURITY ASSURANCE CERTIFICATE</span>
-                <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">PROOF OF CODE AUDIT</h2>
-                <p class="text-xs text-slate-400">Issued by Zoniqfi Guard Deep AST Security Suite</p>
+                <span class="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-indigo-400 font-bold block">SECURITY ASSURANCE CERTIFICATE</span>
+                <h2 class="text-lg sm:text-2xl font-black tracking-tight text-white mt-0.5">PROOF OF CODE AUDIT</h2>
+                <p class="text-[11px] sm:text-xs text-slate-400">Issued by Zoniqfi Guard Deep AST Security Suite</p>
               </div>
             </div>
-            <div class="text-right font-mono text-xs">
+            <div class="sm:text-right font-mono text-xs">
               <span class="text-slate-400 block text-[11px]">Audit Verdict</span>
               <span id="cert-verdict-badge" class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 PASSED - ZERO DEFECTS
@@ -610,7 +616,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8 text-xs relative z-10">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 sm:my-8 text-xs relative z-10">
             <div class="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/80">
               <div>
                 <span class="text-slate-400 block mb-0.5 font-medium">Smart Contract Target:</span>
@@ -648,7 +654,7 @@
 
           <div class="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
             <div class="flex items-center gap-4">
-              <div class="w-16 h-16 bg-white p-1 rounded-xl shadow-md shrink-0 flex items-center justify-center">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white p-1 rounded-xl shadow-md shrink-0 flex items-center justify-center">
                 <img id="cert-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://zoniqfinance.com/verify/aegis-cert" alt="Audit QR Verification" class="w-full h-full rounded-lg" />
               </div>
               <div class="text-xs text-slate-400 space-y-1">
@@ -662,11 +668,11 @@
               </div>
             </div>
 
-            <div class="text-right font-mono text-[11px] shrink-0">
+            <div class="sm:text-right font-mono text-[11px] shrink-0 w-full sm:w-auto">
               <span class="bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg block text-center">
                 SIGNATURE: ED25519-VERIFIED
               </span>
-              <span class="text-slate-500 text-[10px] block mt-1">Zoniq Guard Node ID: #ZF-NODE-01</span>
+              <span class="text-slate-500 text-[10px] block mt-1 text-center sm:text-right">Zoniq Guard Node ID: #ZF-NODE-01</span>
             </div>
           </div>
         </div>
@@ -676,7 +682,7 @@
       <div id="page-settings" class="hidden space-y-6 max-w-5xl mx-auto">
         <div class="flex items-center justify-between pb-4 border-b border-[#1E293B]">
           <div>
-            <h1 class="text-2xl font-bold text-white tracking-tight">Security Rule Configuration</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Security Rule Configuration</h1>
             <p class="text-xs text-slate-400 mt-1">Enable or toggle custom AST inspection rules for SVM & EVM analyzers.</p>
           </div>
           <button onclick="saveRuleConfigs()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition">
@@ -889,6 +895,31 @@ pub enum VaultError { #[msg("Unauthorized")] Unauthorized }`;
         const el = document.getElementById(`page-${p}`);
         if (el) el.classList.toggle('hidden', p !== tabId);
       });
+      // Tutup sidebar otomatis di mobile setelah menu dipilih
+      if (window.innerWidth < 768) {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('mobile-sidebar-backdrop');
+        if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+          sidebar.classList.add('-translate-x-full');
+        }
+        if (backdrop) backdrop.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobile-sidebar-backdrop');
+      if (!sidebar) return;
+
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        if (backdrop) backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        if (backdrop) backdrop.classList.add('hidden');
+      }
       lucide.createIcons();
     }
 
@@ -1545,12 +1576,6 @@ jobs:
       localStorage.setItem('aegis_rule_configs', JSON.stringify(config));
       alert("Rule configurations saved successfully!");
     }
-
-    function toggleMobileSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  if (!sidebar) return;
-  sidebar.classList.toggle('-translate-x-full');
-}
   </script>
 </body>
 </html>
