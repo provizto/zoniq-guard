@@ -1776,13 +1776,22 @@ jobs:
       alert("Rule configurations saved successfully!");
     }
 
-    // ================= ON-CHAIN ATTESTATION HANDLER =================
+    // ================= ON-CHAIN ATTESTATION HANDLER (FULL MAINNET) =================
     async function executeRealAttestation() {
-      const targetName = document.getElementById('cert-contract-name')?.innerText || 'VendorPayFiVault.sol';
-      const targetEco = document.getElementById('cert-target-chain')?.innerText || 'Arbitrum';
-      const score = document.getElementById('cert-score-display')?.innerText || '100';
+      // 1. Deteksi ekosistem secara dinamis dari selector UI atau sertifikat
+      const activeChainSelector = document.getElementById('global-chain-selector')?.value || '';
+      const certTargetEco = document.getElementById('cert-target-chain')?.innerText || '';
+      const targetEco = certTargetEco || (activeChainSelector === 'solana' ? 'Solana' : 'Arbitrum');
 
-      const isSolana = targetEco.toLowerCase().includes('solana');
+      const isSolana = targetEco.toLowerCase().includes('solana') || activeChainSelector.toLowerCase().includes('solana');
+
+      // 2. Gunakan nama file aktif dinamis, bukan VendorPayFiVault.sol
+      const dynamicFileName = window.currentFileName || 
+                        document.getElementById('current-file-name')?.innerText || 
+                        (isSolana ? 'lib.rs' : 'Contract.sol');
+
+      const targetName = document.getElementById('cert-contract-name')?.innerText || dynamicFileName;
+      const score = document.getElementById('cert-score-display')?.innerText || '100';
 
       try {
         if (isSolana) {
@@ -1794,8 +1803,9 @@ jobs:
           const resp = await window.solana.connect();
           const userPubkey = resp.publicKey;
 
+          // 🔒 MAINNET-BETA SOLANA
           const connection = new solanaWeb3.Connection(
-            solanaWeb3.clusterApiUrl("devnet"),
+            solanaWeb3.clusterApiUrl("mainnet-beta"),
             "confirmed"
           );
 
@@ -1820,10 +1830,7 @@ jobs:
           const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
           tx.recentBlockhash = blockhash;
 
-          // Minta tanda tangan Phantom
           const signedTx = await window.solana.signTransaction(tx);
-
-          // Kirim raw transaction langsung ke cluster devnet
           const signature = await connection.sendRawTransaction(signedTx.serialize());
           await connection.confirmTransaction({
             blockhash,
@@ -1831,10 +1838,11 @@ jobs:
             signature
           }, 'confirmed');
 
+          // Explorer tanpa query devnet
           updateAttestationUI(
             signature, 
-            `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
-            "Solana Devnet"
+            `https://explorer.solana.com/tx/${signature}`,
+            "Solana Mainnet"
           );
 
         } else {
@@ -1847,7 +1855,7 @@ jobs:
           await provider.send("eth_requestAccounts", []);
           const signer = await provider.getSigner();
 
-          // 1. Enforce Arbitrum One Mainnet (Chain ID: 42161 / 0xa4b1)
+          // 🔒 ENFORCE ARBITRUM ONE MAINNET (42161 / 0xa4b1)
           const network = await provider.getNetwork();
           if (Number(network.chainId) !== 42161) {
             try {
@@ -1862,11 +1870,8 @@ jobs:
           }
 
           const memoText = `AEGIS-PROOF:${targetName}:${score}:${Date.now()}`;
-          
-          // Gunakan cryptographic signature (gratis gas & tidak akan revert)
           const signature = await signer.signMessage(memoText);
 
-          // 2. Arahkan ke Arbiscan Mainnet Explorer
           updateAttestationUI(
             signature,
             `https://arbiscan.io/address/${await signer.getAddress()}`,
@@ -1893,7 +1898,7 @@ jobs:
         `;
       }
       isOnChainAttested = true;
-      localStorage.setItem("attested_tx_hash", signature);
+      localStorage.setItem("attested_tx_hash", txHash); // <-- fixed variable
       alert(`Attestation recorded successfully on ${chainName}!`);
       switchTab('proof');
     }
