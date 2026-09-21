@@ -1847,15 +1847,16 @@ jobs:
           await provider.send("eth_requestAccounts", []);
           const signer = await provider.getSigner();
 
+          // 1. Enforce Arbitrum One Mainnet (Chain ID: 42161 / 0xa4b1)
           const network = await provider.getNetwork();
-          if (Number(network.chainId) !== 421614) {
+          if (Number(network.chainId) !== 42161) {
             try {
               await window.ethereum.request({
                 method: "wallet_switchEthereumChain",
-                params: [{ chainId: "0x66eee" }]
+                params: [{ chainId: "0xa4b1" }]
               });
             } catch (switchError) {
-              alert("Please switch your network to Arbitrum Sepolia in your wallet.");
+              alert("Please switch your network to Arbitrum One Mainnet in your wallet.");
               return;
             }
           }
@@ -1865,10 +1866,11 @@ jobs:
           // Gunakan cryptographic signature (gratis gas & tidak akan revert)
           const signature = await signer.signMessage(memoText);
 
+          // 2. Arahkan ke Arbiscan Mainnet Explorer
           updateAttestationUI(
             signature,
-            `https://sepolia.arbiscan.io/address/${await signer.getAddress()}`,
-            "Arbitrum Sepolia (Signed Proof)"
+            `https://arbiscan.io/address/${await signer.getAddress()}`,
+            "Arbitrum One (Signed Proof)"
           );
         }
       } catch (err) {
@@ -1985,7 +1987,7 @@ jobs:
           updateAuthUI();
 
           const connection = new solanaWeb3.Connection(
-            solanaWeb3.clusterApiUrl("devnet"),
+            solanaWeb3.clusterApiUrl("mainnet-beta"), // atau gunakan RPC kustom seperti QuickNode / Helius / Alchemy jika ada
             "confirmed"
           );
 
@@ -2014,6 +2016,39 @@ jobs:
         if (!window.ethereum) {
           alert("Web3 Wallet not detected! Please install MetaMask.");
           return;
+        }
+
+        // 🔒 KUNCI EVM KE ARBITRUM ONE MAINNET (Chain ID: 0xa4b1 / 42161)
+        const ARBITRUM_MAINNET_CHAIN_ID = "0xa4b1";
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: ARBITRUM_MAINNET_CHAIN_ID }]
+          });
+        } catch (switchError) {
+          // Error 4902: Jaringan Arbitrum One belum terdaftar di MetaMask user
+          if (switchError.code === 4902) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                  chainId: ARBITRUM_MAINNET_CHAIN_ID,
+                  chainName: "Arbitrum One",
+                  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+                  rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+                  blockExplorerUrls: ["https://arbiscan.io/"]
+                }]
+              });
+            } catch (addError) {
+              console.error("Failed to add Arbitrum One:", addError);
+              alert("Please enable and switch to Arbitrum One Mainnet to proceed.");
+              return;
+            }
+          } else {
+            console.warn("Switch chain rejected:", switchError);
+            alert("Payment requires switching to Arbitrum One Mainnet.");
+            return;
+          }
         }
 
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -2059,7 +2094,7 @@ jobs:
       alert(`Payment Confirmed!\n\nTier: ${plan.name}\nTx Reference: ${txRef.slice(0, 10)}...\nAudit Credits: ${plan.scans} Scans\n\nYour account has been upgraded to ${planTier.toUpperCase()}!`);
     }
 
-    // ================= HARD LOCK PROOF OF AUDIT =================
+    // ================= HARD LOCK & DISCLAIMER MODAL =================
 let isOnChainAttested = false;
 
 function openProofOfAuditTab() {
@@ -2071,11 +2106,68 @@ function openProofOfAuditTab() {
     return;
   }
 
-  // Jika sudah attest dan bayar gas fee, panggil fungsi pindah tab yang asli
-  if (typeof switchTab === "function") {
-    switchTab('proof'); // sesuaikan nama ID tab jika berbeda
+  // Buka Pop-up Disclaimer terlebih dahulu
+  const modal = document.getElementById("disclaimer-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  } else {
+    // Fallback jika modal HTML belum terpasang
+    if (typeof switchTab === "function") switchTab('proof');
   }
 }
-  </script>
+
+function closeDisclaimerModal() {
+  const modal = document.getElementById("disclaimer-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function confirmAndOpenProof() {
+  closeDisclaimerModal();
+  if (typeof switchTab === "function") {
+    switchTab('proof');
+  }
+}
+</script>
+
+  <!-- ================= DISCLAIMER MODAL ================= -->
+<div id="disclaimer-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-[#0f172a] border border-slate-800 max-w-lg w-full rounded-2xl p-6 shadow-2xl relative text-left">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white tracking-wide">Security & Audit Disclaimer</h3>
+        <p class="text-[11px] text-slate-400">Please review protocol terms before viewing on-chain proof</p>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-300 leading-relaxed mb-6 space-y-2">
+      <p>
+        <strong class="text-slate-100">Automated Static Analysis:</strong> Zoniq-Guard conducts deterministic heuristic and AST evaluations. Reports and scores do not constitute formal mathematical verification, escrow insurance, or financial advice.
+      </p>
+      <p>
+        <strong class="text-slate-100">Liability Limitation:</strong> Cryptographic notarization proves static state integrity at the time of scan. Smart contract deployments and operational risks are the sole responsibility of the developer or project owner.
+      </p>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex items-center justify-end gap-3">
+      <button onclick="closeDisclaimerModal()" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+        Cancel
+      </button>
+      <button onclick="confirmAndOpenProof()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
+        <span>I Understand & Proceed</span> &rarr;
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- ================= END DISCLAIMER MODAL ================= -->
 </body>
 </html>
