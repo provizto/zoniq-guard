@@ -135,7 +135,7 @@
           <span>CI/CD & GitHub</span>
         </button>
 
-        <button onclick="switchTab('proof')" id="nav-proof" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+        <button onclick="openProofOfAuditTab()" id="nav-proof" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
           <i data-lucide="award" class="w-4 h-4"></i>
           <span>Proof of Audit</span>
         </button>
@@ -1890,8 +1890,10 @@ jobs:
           </div>
         `;
       }
-      switchTab('proof');
+      isOnChainAttested = true;
+      localStorage.setItem("attested_tx_hash", signature);
       alert(`Attestation recorded successfully on ${chainName}!`);
+      switchTab('proof');
     }
 
     // ================= WALLET PAYMENT & ADMIN BYPASS =================
@@ -2056,6 +2058,24 @@ jobs:
 
       alert(`Payment Confirmed!\n\nTier: ${plan.name}\nTx Reference: ${txRef.slice(0, 10)}...\nAudit Credits: ${plan.scans} Scans\n\nYour account has been upgraded to ${planTier.toUpperCase()}!`);
     }
+
+    // ================= HARD LOCK PROOF OF AUDIT =================
+let isOnChainAttested = false;
+
+function openProofOfAuditTab() {
+  // Cek apakah user sudah pernah sukses attest (atau tersimpan di storage)
+  const savedTx = localStorage.getItem("attested_tx_hash");
+  
+  if (!isOnChainAttested && !savedTx) {
+    alert("Access Restricted: No valid on-chain attestation found.\nPlease run a scan and click 'Attest Proof' to notarize the certificate on-chain first.");
+    return;
+  }
+
+  // Jika sudah attest dan bayar gas fee, panggil fungsi pindah tab yang asli
+  if (typeof switchTab === "function") {
+    switchTab('proof'); // sesuaikan nama ID tab jika berbeda
+  }
+}
   </script>
 </body>
 </html>
