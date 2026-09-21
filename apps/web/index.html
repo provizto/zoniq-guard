@@ -846,7 +846,6 @@
         </div>
       </section>
       <!-- ================= END SUBSCRIPTION PLANS ================= -->
-    </main>
   
   <!-- FOOTER RAMPING & NON-STICKY -->
   <footer class="w-full bg-[#0B101B] border-t border-[#1B273F] py-3 px-4 sm:px-6 text-xs text-slate-400 mt-auto">
@@ -873,7 +872,7 @@
   </div>
 </footer>
     <!-- ================= END FOOTER ================= -->
-
+  </main>
   </div>
 
   <!-- AUTH MODAL -->
@@ -1884,13 +1883,16 @@ function activateAdminPrivileges(adminAddress) {
 }
 
 function updateConnectButtonUI(address, isAdmin = false) {
-  const btn = document.querySelector("button:has-text('Connect'), .connect-wallet-btn") || 
-              document.getElementById("btn-connect-wallet");
+  // Gunakan pencarian tombol yang valid di browser
+  const btn = document.getElementById("btn-connect-wallet") || 
+              document.querySelector(".connect-wallet-btn") ||
+              Array.from(document.querySelectorAll("button")).find(b => b.textContent.includes("Connect") || b.textContent.includes("Sign In"));
+
   if (btn) {
     const shortAddr = address.slice(0, 4) + "..." + address.slice(-4);
     const badgeColor = isAdmin ? "bg-purple-400" : "bg-emerald-400";
     const roleText = isAdmin ? " [ADMIN]" : "";
-    
+
     btn.innerHTML = `<span class="w-2 h-2 rounded-full ${badgeColor} inline-block mr-1"></span> ${shortAddr}${roleText}`;
     btn.classList.replace("bg-indigo-600", "bg-slate-800");
   }
