@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
@@ -96,7 +97,45 @@ app.post('/api/audit', (req, res) => {
   }
 });
 
+// ENDPOINT TELEGRAM AMAN (TOKEN TERSEMBUNYI DI .ENV)
+app.post('/api/notify-payment', async (req, res) => {
+  const { planType, txHash, network, buyerWallet } = req.body;
+  
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!botToken || !chatId) {
+    console.error("[ZONIQ-GUARD] TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID belum ada di .env");
+    return res.status(500).json({ success: false, error: 'Telegram credentials missing on server.' });
+  }
+
+  const message = 
+    `💰 *PEMBAYARAN PAKET MASUK!*\n\n` +
+    `📦 *Paket:* ${(planType || 'PRO').toUpperCase()}\n` +
+    `🌐 *Jaringan:* ${network || 'Unknown'}\n` +
+    `👤 *Pembeli:* \`${buyerWallet || 'Anonymous'}\`\n` +
+    `🔗 *Tx Hash:* \`${txHash}\`\n\n` +
+    `_Zoniq Guard Production Notifier._`;
+
+  try {
+    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+    const result = await tgRes.json();
+    return res.json({ success: result.ok });
+  } catch (err) {
+    console.error("[ZONIQ-GUARD] Gagal kirim notif Telegram:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`[AEGIS-CORE] Security Orchestration API running at http://localhost:${PORT}`);
-  console.log(`[AEGIS-CORE] Ready to receive audit payloads from apps/web dashboard.`);
+  console.log(`[ZONIQ-GUARD] Security Core API running at http://localhost:${PORT}`);
+  console.log(`[ZONIQ-GUARD] Ready to receive audit & payment payloads.`);
 });
