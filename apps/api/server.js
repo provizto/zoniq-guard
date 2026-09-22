@@ -97,6 +97,107 @@ app.post('/api/audit', (req, res) => {
   }
 });
 
+// ========================================================
+// AI BUSINESS LOGIC & DEEP VULNERABILITY ENGINE
+// ========================================================
+app.post('/api/deep-audit', async (req, res) => {
+  const { code, chain = 'solidity' } = req.body;
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'GEMINI_API_KEY belum dikonfigurasi di file .env server.'
+    });
+  }
+
+  if (!code || typeof code !== 'string' || !code.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Payload kode smart contract tidak boleh kosong.'
+    });
+  }
+
+  const systemInstructionText = 
+    "You are an elite Web3 Smart Contract Security Auditor. " +
+    "Analyze the provided smart contract code specifically for complex business logic flaws, " +
+    "economic vulnerabilities, access control loopholes, and reentrancy variations. " +
+    "Output ONLY valid JSON matching this schema: " +
+    "{\"securityScore\": 85, \"summary\": \"overview text\", \"findings\": [{\"severity\": \"HIGH\", \"title\": \"Issue title\", \"description\": \"Detailed explanation\", \"remediation\": \"How to fix\"}]}";
+
+  const userPrompt = `Audit this ${chain} smart contract for business logic vulnerabilities:\n\n\`\`\`\n${code}\n\`\`\``;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+
+    const aiResponse = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: userPrompt }]
+          }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2
+        }
+      })
+    });
+
+    const data = await aiResponse.json();
+
+    if (!aiResponse.ok) {
+      console.error("[ZONIQ-GUARD AI] Response error:", data);
+      return res.status(aiResponse.status).json({
+        success: false,
+        error: data.error?.message || 'Gagal memproses pemindaian AI.'
+      });
+    }
+
+    const candidate = data.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+
+    if (finishReason && finishReason !== 'STOP') {
+      console.warn(`[ZONIQ-GUARD AI] Non-standard finish reason: ${finishReason}`);
+      if (finishReason === 'SAFETY') {
+        return res.status(422).json({
+          success: false,
+          error: 'Pemindaian diblokir oleh Gemini safety filter.'
+        });
+      }
+    }
+
+    const rawJsonText = candidate?.content?.parts?.[0]?.text;
+    if (!rawJsonText) {
+      return res.status(502).json({
+        success: false,
+        error: 'AI tidak mengembalikan output konten.'
+      });
+    }
+
+    const parsedAudit = JSON.parse(rawJsonText);
+
+    return res.json({
+      success: true,
+      data: parsedAudit,
+      scannedAt: new Date().toISOString()
+    });
+
+  } catch (err) {
+    console.error("[ZONIQ-GUARD AI] Exception failure:", err);
+    return res.status(500).json({
+      success: false,
+      error: `AI engine failure: ${err.message}`
+    });
+  }
+});
+
 // ENDPOINT TELEGRAM AMAN (TOKEN TERSEMBUNYI DI .ENV)
 app.post('/api/notify-payment', async (req, res) => {
   const { planType, txHash, network, buyerWallet } = req.body;
