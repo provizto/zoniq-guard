@@ -1127,29 +1127,19 @@
     // TELEGRAM PAYMENT NOTIFIER
     // ========================================================
     async function notifyTelegramPayment(planType, txHash, network, buyerWallet) {
-      const botToken = "8746747110:AAEIQft2Sv5KTw1_U3QBRrKW0RxcTEC4tJc";
-      const chatId = "8559621472";
-
-      const message = 
-        `💰 *PEMBAYARAN PAKET MASUK!*\n\n` +
-        `📦 *Paket:* ${planType.toUpperCase()}\n` +
-        `🌐 *Jaringan:* ${network}\n` +
-        `👤 *Pembeli:* \`${buyerWallet}\`\n` +
-        `🔗 *Tx Hash:* \`${txHash}\`\n\n` +
-        `_Cek saldo masuk di wallet admin._`;
-
       try {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        await fetch('http://localhost:4000/api/notify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            chat_id: chatId,
-            text: message,
-            parse_mode: 'Markdown'
+            planType,
+            txHash,
+            network,
+            buyerWallet
           })
         });
       } catch (err) {
-        console.error("Gagal kirim notif Telegram:", err);
+        console.error("Failed to forward payment notification via server:", err);
       }
     }
 
@@ -1217,7 +1207,7 @@
       renderVulnerabilityList();
     }
 
-    // ================= STANDALONE DETERMINISTIC AST SCANNER ENGINE =================
+    // ================= HYBRID PRODUCTION SCANNER (VERCEL READY) =================
     async function startAuditScan() {
       const terminal = document.getElementById('terminal-logs');
       const spinner = document.getElementById('scan-spinner');
@@ -1234,41 +1224,38 @@
         return;
       }
 
-      // Validasi & Pengurangan Kuota Riil
+      // 1. Validasi & Pengurangan Kuota Riil
       const currentQuotaData = getScanQuota();
       if (!currentQuotaData.isUnlimited) {
         if (currentQuotaData.quota <= 0) {
           alert("Audit quota exhausted (0 Left)! Please upgrade to Pro or Enterprise plan to run additional deep scans.");
           return;
         }
-        // Kurangi 1 kuota dan simpan permanen
         const remaining = currentQuotaData.quota - 1;
         localStorage.setItem('aegis_scan_quota', remaining.toString());
         syncQuotaDisplay();
       }
-
-      const lines = code.split('\n');
 
       btn.disabled = true;
       btn.classList.add('opacity-50');
       spinner.classList.remove('hidden');
 
       terminal.innerHTML = `
-        <div class="text-indigo-400 font-bold">[*] Initializing Zoniq Guard Static Engine...</div>
-        <div class="text-slate-400">> Standalone Client-Side Execution (0 network latency)</div>
-        <div class="text-slate-400">> Target Ecosystem: <span class="font-bold text-white uppercase">${chain}</span></div>
-        <div class="text-slate-400">> Analyzing AST for: <span class="text-cyan-300 font-mono">${filename}</span></div>
+        <div class="text-indigo-400 font-bold">[*] Initializing Zoniq Guard Cloud Production Engine...</div>
+        <div class="text-slate-400">> Ecosystem: <span class="font-bold text-white uppercase">${chain}</span></div>
+        <div class="text-slate-400">> Target: <span class="text-cyan-300 font-mono">${filename}</span></div>
+        <div class="text-amber-400">> Running AST heuristic rules & querying AI Deep Audit Core...</div>
       `;
 
+      const detectedIssues = [];
+      const lines = code.split('\n');
+
+      // 2. ATURAN STATIS INSTAN (Lokal Browser Pengguna)
       let activeRules = { sol001: true, sol002: true, arb001: true, arb002: true };
       const savedConfig = localStorage.getItem('aegis_rule_configs');
       if (savedConfig) {
         try { activeRules = JSON.parse(savedConfig); } catch (e) {}
       }
-
-      await new Promise(r => setTimeout(r, 600));
-
-      const detectedIssues = [];
 
       if (chain === 'solana') {
         if (activeRules.sol001 && /pub\s+authority\s*:\s*AccountInfo/i.test(code)) {
@@ -1365,10 +1352,45 @@
         });
       }
 
+      // 3. PANGGIL DEEP AUDIT AI MELALUI RELATIVE ENDPOINT VERCEL
+      try {
+        const response = await fetch('/api/deep-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, chain })
+        });
+
+        const resData = await response.json();
+
+        if (resData.success && resData.data?.findings) {
+          resData.data.findings.forEach((issue, idx) => {
+            detectedIssues.push({
+              id: `AI-FINDING-00${idx + 1}`,
+              title: issue.title,
+              severity: (issue.severity || 'high').toLowerCase(),
+              chain: chain,
+              file: filename,
+              cve: "AI-DETECTED",
+              impact: issue.description,
+              fixSummary: issue.remediation,
+              diff: [
+                { type: "del", text: "- Logic/Invariant Vulnerability Identified by AI" },
+                { type: "add", text: `+ Fix: ${issue.remediation}` }
+              ],
+              remediationCode: `// Remediation Guide:\n// ${issue.remediation}`
+            });
+          });
+          terminal.innerHTML += `<div class="text-indigo-300">> AI Engine: Analyzed and scored (${resData.data.securityScore ?? 'N/A'}/100)</div>`;
+        }
+      } catch (err) {
+        console.warn("[ZONIQ-GUARD] Deep Audit AI unreachable or fallback:", err);
+      }
+
+      // 4. KONSOLIDASI HASIL KE DASHBOARD
       terminal.innerHTML += `
-        <div class="text-cyan-400">> AST verification completed.</div>
-        <div class="text-emerald-400 font-bold">> [✓] Scan complete. Found ${detectedIssues.length} invariant issue(s).</div>
-        <div class="text-slate-400">> Synchronizing all modules & findings view...</div>
+        <div class="text-cyan-400">> Hybrid scan pipeline finalized.</div>
+        <div class="text-emerald-400 font-bold">> [✓] Scan complete. Found ${detectedIssues.length} total issue(s).</div>
+        <div class="text-slate-400">> Synchronizing Inspector views...</div>
       `;
 
       VULNERABILITIES.length = 0;
