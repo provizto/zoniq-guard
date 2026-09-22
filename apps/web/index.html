@@ -1042,12 +1042,15 @@
     }
 
     function handleLogout() {
-      currentUser = null;
-      localStorage.removeItem("connected_wallet");
-      localStorage.removeItem("user_tier");
-      localStorage.removeItem("is_admin");
-      updateAuthUI();
-    }
+  currentUser = null;
+  localStorage.removeItem("connected_wallet");
+  localStorage.removeItem("user_tier");
+  localStorage.removeItem("is_admin");
+  localStorage.removeItem("scan_credits");
+  
+  updateAuthUI();
+  location.reload();
+}
 
     // ========================================================
     // SCAN QUOTA MANAGEMENT SYSTEM (REAL DATA)
@@ -1954,17 +1957,27 @@ jobs:
     };
 
     function restoreSessionState() {
-      const currentTier = localStorage.getItem("user_tier") || "free";
       const userWallet = localStorage.getItem("connected_wallet");
-      
-      if (userWallet) {
-        if (isAdminWallet(userWallet)) {
-          activateAdminPrivileges(userWallet);
-        } else {
-          currentUser = { name: `${userWallet.slice(0, 4)}...${userWallet.slice(-4)}`, role: `${currentTier.toUpperCase()} Member` };
-          updateAuthUI();
-          updateTierBadgeUI(currentTier);
-        }
+      if (!userWallet) return;
+
+      if (isAdminWallet(userWallet)) {
+        activateAdminPrivileges(userWallet);
+      } else {
+        // Hapus status admin jika dompet bukan admin
+        localStorage.removeItem("is_admin");
+        
+        const userTier = localStorage.getItem(`tier_${userWallet}`) || "free";
+        const userCredits = localStorage.getItem(`credits_${userWallet}`) || (userTier === "free" ? "3" : "25");
+        
+        localStorage.setItem("user_tier", userTier);
+        localStorage.setItem("scan_credits", userCredits);
+
+        currentUser = { 
+          name: `${userWallet.slice(0, 4)}...${userWallet.slice(-4)}`, 
+          role: `${userTier.toUpperCase()} Member` 
+        };
+        updateAuthUI();
+        updateTierBadgeUI(userTier);
       }
     }
 
@@ -1996,13 +2009,30 @@ jobs:
     }
 
     function handleWalletAuthenticated(address) {
+      if (!address) return;
       localStorage.setItem("connected_wallet", address);
       
       if (isAdminWallet(address)) {
         activateAdminPrivileges(address);
         alert(`Welcome back, Protocol Architect!\nAdmin privileges unlocked. Unlimited deep audit scans enabled.`);
       } else {
-        alert(`Wallet Connected:\n${address}`);
+        // Hapus status admin seketika untuk wallet biasa
+        localStorage.removeItem("is_admin");
+
+        const userTier = localStorage.getItem(`tier_${address}`) || "free";
+        const userCredits = localStorage.getItem(`credits_${address}`) || (userTier === "free" ? "3" : "3");
+        
+        localStorage.setItem("user_tier", userTier);
+        localStorage.setItem("scan_credits", userCredits);
+
+        currentUser = { 
+          name: `${address.slice(0, 4)}...${address.slice(-4)}`, 
+          role: `${userTier.toUpperCase()} Member` 
+        };
+        updateAuthUI();
+        updateTierBadgeUI(userTier);
+
+        alert(`Wallet Connected as Regular User:\n${address}`);
       }
     }
 
@@ -2055,7 +2085,7 @@ jobs:
 
           // Kirim notifikasi transaksi sukses ke Telegram
           const buyerPubkey = window.solana?.publicKey?.toString() || "Unknown";
-          notifyTelegramPayment(planTier, signature, "Solana Devnet", buyerPubkey);
+          notifyTelegramPayment(planTier, signature, "Solana Mainnet", buyerPubkey);
 
           activateUserPlan(planTier, signature);
           return;
@@ -2122,6 +2152,11 @@ jobs:
             value: weiAmount
           }]
         });
+
+        // Kirim notifikasi transaksi EVM sukses ke Telegram
+        if (typeof notifyTelegramPayment === "function") {
+          notifyTelegramPayment(planTier, txHash, "Arbitrum One Mainnet", sender);
+        }
 
         activateUserPlan(planTier, txHash);
 
