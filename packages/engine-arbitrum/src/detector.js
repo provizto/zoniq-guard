@@ -30,7 +30,7 @@ function analyzeSolidityCode(code, filename = 'Contract.sol') {
 
       if (isAdminOnly && !hasAccessModifier) {
         issues.push({
-          id: 'AEGIS-ARB-001',
+          id: 'GUARD-ARB-001',
           severity: 'CRITICAL',
           title: 'Missing Access Control on Critical Function',
           chain: 'arbitrum',
@@ -51,7 +51,7 @@ function analyzeSolidityCode(code, filename = 'Contract.sol') {
     if (trimmed.includes('.call{value:') || trimmed.includes('.call{value :')) {
       if (!hasReentrancyGuard) {
         issues.push({
-          id: 'AEGIS-ARB-002',
+          id: 'GUARD-ARB-002',
           severity: 'CRITICAL',
           title: 'Potential Reentrancy Without Guard',
           chain: 'arbitrum',

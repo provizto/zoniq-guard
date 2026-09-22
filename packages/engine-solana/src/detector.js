@@ -27,7 +27,7 @@ function analyzeAnchorCode(code) {
       !trimmed.includes('#[account(signer)]')
     ) {
       issues.push({
-        id: 'AEGIS-SOL-001',
+        id: 'GUARD-SOL-001',
         title: 'Missing Signer Constraint on Authority Account',
         severity: 'CRITICAL',
         cve: 'CWE-285',
@@ -53,7 +53,7 @@ function analyzeAnchorCode(code) {
 
       if (!hasDocCheck) {
         issues.push({
-          id: 'AEGIS-SOL-002',
+          id: 'GUARD-SOL-002',
           title: 'Undocumented UncheckedAccount',
           severity: 'HIGH',
           cve: 'CWE-20',
@@ -79,7 +79,7 @@ function analyzeAnchorCode(code) {
       const multiLineCheck = lines.slice(idx, idx + 3).join(' ');
       if (!multiLineCheck.includes('bump')) {
         issues.push({
-          id: 'AEGIS-SOL-003',
+          id: 'GUARD-SOL-003',
           title: 'Missing Canonical Bump Validation on PDA',
           severity: 'HIGH',
           cve: 'CWE-345',

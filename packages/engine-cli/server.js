@@ -87,5 +87,5 @@ app.post('/api/scan', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Aegis Core Engine API live on http://localhost:${PORT}`);
+  console.log(`🚀 Guard Core Engine API live on http://localhost:${PORT}`);
 });
