@@ -1144,25 +1144,38 @@
     // TELEGRAM PAYMENT NOTIFIER (PRODUCTION READY)
     // ========================================================
     async function notifyTelegramPayment(planType, txHash, network, buyerWallet) {
-      // Ambil kode referral yang tersimpan di browser pembeli
-      const activeRef = localStorage.getItem('referred_by') || 'Direct / None';
+  try {
+    // 1. Ambil kode referral dari URL ?ref=... atau localStorage (tanpa placeholder paksaan)
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeRef = urlParams.get('ref') || localStorage.getItem('referred_by') || '';
 
-      try {
-        await fetch('/api/notify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            planType,
-            txHash,
-            network,
-            buyerWallet,
-            referredBy: activeRef // Menyertakan nama KOL ke backend
-          })
-        });
-      } catch (err) {
-        console.error("Failed to forward payment notification via server:", err);
+    // 2. Hitung komisi jika ada referral
+    let commission = '-';
+    if (activeRef) {
+      if (network && network.toLowerCase().includes('solana')) {
+        commission = planType === 'pro' ? '0.009 SOL' : '0.045 SOL';
+      } else {
+        commission = planType === 'pro' ? '0.0018 ETH' : '0.009 ETH';
       }
     }
+
+    // 3. Kirim ke backend port 5000
+    await fetch('http://localhost:5000/api/notify-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        planType: planType,
+        txHash: txHash,
+        network: network,
+        buyerWallet: buyerWallet,
+        referralCode: activeRef,
+        commissionAmount: commission
+      })
+    });
+  } catch (err) {
+    console.warn('Failed to dispatch Telegram payment notification:', err);
+  }
+}
 
     // ========================================================
     // PLAN SUBSCRIPTION & QUOTA TOP-UP (REAL ON-CHAIN ACTIVATION)

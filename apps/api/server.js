@@ -200,48 +200,46 @@ app.post('/api/deep-audit', async (req, res) => {
 
 // ENDPOINT TELEGRAM (CREDENTIALS SECURED VIA .ENV)
 app.post('/api/notify-payment', async (req, res) => {
-  const { planType, txHash, network, buyerWallet, referredBy } = req.body;
-  
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId) {
-    console.error("[ZONIQ-GUARD] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in .env");
-    return res.status(500).json({ success: false, error: 'Telegram credentials missing on server.' });
-  }
-
-  const referralLabel = referredBy && referredBy !== 'Direct / None' 
-    ? `🎁 *Referral (KOL):* \`${referredBy}\`\n` 
-    : `🎁 *Referral:* \`Direct (No KOL)\`\n`;
-
-  const message = 
-    `💰 *SUBSCRIPTION PAYMENT RECEIVED!*\n\n` +
-    `📦 *Plan:* ${(planType || 'PRO').toUpperCase()}\n` +
-    `🌐 *Network:* ${network || 'Unknown'}\n` +
-    `👤 *Buyer Wallet:* \`${buyerWallet || 'Anonymous'}\`\n` +
-    referralLabel +
-    `🔗 *Tx Hash:* \`${txHash}\`\n\n` +
-    `_Zoniq Guard Automated Security Node_`;
-
   try {
-    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    const { planType, txHash, network, buyerWallet, referralCode, commissionAmount } = req.body;
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      return res.status(500).json({ success: false, error: 'Telegram credentials not configured' });
+    }
+
+    // Compose referral and commission details
+    const refDetails = referralCode 
+      ? `\n🏷️ <b>Referral / KOL:</b> ${referralCode}\n💵 <b>KOL Commission:</b> ${commissionAmount || '-'}`
+      : '\n🏷️ <b>Referral / KOL:</b> None (Direct / Organic)';
+
+    const message = `💰 <b>PAYMENT CONFIRMED</b>\n\n` +
+      `📦 <b>Plan:</b> ${planType ? planType.toUpperCase() : 'N/A'}\n` +
+      `🌐 <b>Network:</b> ${network || 'N/A'}\n` +
+      `👤 <b>Buyer Wallet:</b> <code>${buyerWallet || 'N/A'}</code>${refDetails}\n` +
+      `🔗 <b>Tx Hash:</b> <code>${txHash || 'N/A'}</code>\n\n` +
+      `<i>Please verify the transaction in the treasury wallet.</i>`;
+
+    const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(telegramUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'Markdown'
+        parse_mode: 'HTML'
       })
     });
-    const result = await tgRes.json();
-    return res.json({ success: result.ok });
+
+    const result = await response.json();
+    if (!result.ok) {
+      return res.status(502).json({ success: false, error: result.description });
+    }
+
+    return res.json({ success: true });
   } catch (err) {
-    console.error("[ZONIQ-GUARD] Failed to dispatch Telegram notification:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`[ZONIQ-GUARD] Security Core API running on port ${PORT}`);
-  console.log(`[ZONIQ-GUARD] Ready to process security audit & payment payloads.`);
 });
