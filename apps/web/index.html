@@ -1017,8 +1017,8 @@
     async function loginWithWallet(type) {
   try {
     if (type === 'svm' || type === 'phantom') {
-      const provider = window.backpack || window.solflare || window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null);
-
+      const provider = window.solflare || window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null) || window.backpack;
+      
       if (!provider) {
         alert("No Solana wallet extension detected. Please install Phantom, Solflare, or Backpack.");
         window.open("https://phantom.app/", "_blank");
