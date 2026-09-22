@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Zoniqfi Aegis Security Core - Static Analysis CLI Scanner
+ * Zoniq Guard Security Core - Static Analysis CLI Scanner
  * Evaluates Solana (Rust/Anchor) and Arbitrum/EVM (Solidity) AST & Syntax Rules.
  */
 
@@ -84,7 +84,7 @@ const RULES = {
 
 function runAudit(targetFilePath, ecosystem = 'solana') {
   console.log(`\n======================================================`);
-  console.log(`🛡️  ZONIQFI AEGIS STATIC AUDIT ENGINE`);
+  console.log(`🛡️  ZONIQ GUARD STATIC AUDIT ENGINE`);
   console.log(`Target: ${targetFilePath} | Ecosystem: ${ecosystem.toUpperCase()}`);
   console.log(`======================================================\n`);
 

@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    service: 'Zoniqfi Aegis Security Core API',
+    service: 'Zoniq Guard Security Core API',
     supportedChains: ['solana', 'arbitrum', 'base', 'polygon', 'ethereum'],
     timestamp: new Date().toISOString()
   });
