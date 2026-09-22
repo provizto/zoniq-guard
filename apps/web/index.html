@@ -1175,7 +1175,7 @@
       const solWallet = window.solana?.publicKey?.toString();
       const evmWallet = window.ethereum?.selectedAddress;
       const buyerWallet = solWallet || evmWallet || localStorage.getItem('connected_wallet') || "Wallet Connected";
-      const network = solWallet ? "Solana Devnet" : (evmWallet ? "Arbitrum / EVM" : "Multi-Chain");
+      const network = solWallet ? "Solana Mainnet" : (evmWallet ? "EVM (Multi-Chain)" : "Multi-Chain");
       const refTx = localStorage.getItem('last_payment_tx') || ("TX-" + Math.random().toString(36).substring(2, 10).toUpperCase());
       notifyTelegramPayment(planLabel, refTx, network, buyerWallet);
 
