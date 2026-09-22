@@ -1111,6 +1111,36 @@
 }
 
     // ========================================================
+    // TELEGRAM PAYMENT NOTIFIER
+    // ========================================================
+    async function notifyTelegramPayment(planType, txHash, network, buyerWallet) {
+      const botToken = "8746747110:AAEIQft2Sv5KTw1_U3QBRrKW0RxcTEC4tJc";
+      const chatId = "8559621472";
+
+      const message = 
+        `💰 *PEMBAYARAN PAKET MASUK!*\n\n` +
+        `📦 *Paket:* ${planType.toUpperCase()}\n` +
+        `🌐 *Jaringan:* ${network}\n` +
+        `👤 *Pembeli:* \`${buyerWallet}\`\n` +
+        `🔗 *Tx Hash:* \`${txHash}\`\n\n` +
+        `_Cek saldo masuk di wallet admin._`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (err) {
+        console.error("Gagal kirim notif Telegram:", err);
+      }
+    }
+
+    // ========================================================
     // PLAN SUBSCRIPTION & QUOTA TOP-UP (REAL ON-CHAIN ACTIVATION)
     // ========================================================
     function activatePaidPlan(planType) {
@@ -1129,6 +1159,12 @@
 
       localStorage.setItem('aegis_user_tier', planLabel);
       localStorage.setItem('aegis_scan_quota', updatedTotal.toString());
+      const solWallet = window.solana?.publicKey?.toString();
+      const evmWallet = window.ethereum?.selectedAddress;
+      const buyerWallet = solWallet || evmWallet || localStorage.getItem('connected_wallet') || "Wallet Connected";
+      const network = solWallet ? "Solana Devnet" : (evmWallet ? "Arbitrum / EVM" : "Multi-Chain");
+      const refTx = localStorage.getItem('last_payment_tx') || ("TX-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+      notifyTelegramPayment(planLabel, refTx, network, buyerWallet);
 
       syncQuotaDisplay();
       alert(`Subscription Confirmed! ${planLabel} activated with +${scansGranted} audit scans. Total Quota: ${updatedTotal}`);
@@ -2016,6 +2052,10 @@ jobs:
 
           const { signature } = await window.solana.signAndSendTransaction(transaction);
           await connection.confirmTransaction(signature, "confirmed");
+
+          // Kirim notifikasi transaksi sukses ke Telegram
+          const buyerPubkey = window.solana?.publicKey?.toString() || "Unknown";
+          notifyTelegramPayment(planTier, signature, "Solana Devnet", buyerPubkey);
 
           activateUserPlan(planTier, signature);
           return;
