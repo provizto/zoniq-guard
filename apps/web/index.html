@@ -720,11 +720,16 @@
               </div>
               <div>
                 <span class="text-slate-400 block mb-0.5 font-medium">On-Chain Attestation Hash:</span>
-                <div id="attestation-hash-display">
-                  <span id="cert-hash-display" class="font-mono text-indigo-300 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">
-                    0x7f29a0c3b889d1469e32a210984df9a1b429031c2e7b89d
-                  </span>
-                </div>
+                <div id="attestation-hash-display" class="space-y-1.5">
+                    <span id="cert-hash-display" class="font-mono text-indigo-300 break-all bg-slate-950 p-2 rounded-lg block text-[11px] border border-slate-800 select-all">
+                      NOT ATTESTED YET
+                    </span>
+                    <div id="cert-explorer-container" class="hidden">
+                      <a id="cert-explorer-link" href="#" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-mono mt-1">
+                        <span>View on Block Explorer</span> &nearr;
+                      </a>
+                    </div>
+                  </div>
               </div>
             </div>
           </div>
@@ -1163,12 +1168,6 @@
       renderVulnerabilityList();
     }
 
-    function triggerSampleAudit() {
-      loadTemplate('arbitrum');
-      switchTab('scanner');
-      startAuditScan();
-    }
-
     // ================= STANDALONE DETERMINISTIC AST SCANNER ENGINE =================
     async function startAuditScan() {
       const terminal = document.getElementById('terminal-logs');
@@ -1450,10 +1449,10 @@
         }
       }
 
-      const randomBytes = new Uint8Array(24);
-      crypto.getRandomValues(randomBytes);
-      const newHash = "0x" + Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-      if (certHash) certHash.innerText = newHash;
+      const savedRealTx = localStorage.getItem("attested_tx_hash");
+      if (certHash) {
+        certHash.innerText = savedRealTx || "NOT ATTESTED YET (RUN 'ATTEST PROOF' ON MAINNET)";
+      }
 
       if (certScore) {
         certScore.innerText = `${score.toFixed(1)} / 100`;
@@ -1748,6 +1747,23 @@ jobs:
 
     function refreshCertificateData() {
       syncAllModules();
+
+      const savedTx = localStorage.getItem("attested_tx_hash");
+      const savedUrl = localStorage.getItem("attested_tx_url");
+      const savedChain = localStorage.getItem("attested_tx_chain");
+
+      const hashDisplay = document.getElementById('cert-hash-display');
+      const expContainer = document.getElementById('cert-explorer-container');
+      const expLink = document.getElementById('cert-explorer-link');
+
+      if (savedTx && hashDisplay) {
+        hashDisplay.innerText = savedTx;
+        if (expContainer && expLink && savedUrl) {
+          expContainer.classList.remove('hidden');
+          expLink.href = savedUrl;
+          expLink.innerText = `View on ${savedChain || 'Mainnet'} Explorer ↗`;
+        }
+      }
     }
 
     function printCertificate() {
@@ -1909,6 +1925,8 @@ jobs:
       }
       isOnChainAttested = true;
       localStorage.setItem("attested_tx_hash", txHash); // <-- fixed variable
+      localStorage.setItem("attested_tx_url", explorerUrl);   // <-- TAMBAH INI
+      localStorage.setItem("attested_tx_chain", chainName);  // <-- TAMBAH INI
       alert(`Attestation recorded successfully on ${chainName}!`);
       switchTab('proof');
     }
