@@ -895,7 +895,7 @@
       </div>
 
       <div class="space-y-3">
-        <button onclick="loginWithWallet('phantom')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition text-xs font-semibold text-white">
+        <button onclick="loginWithWallet('svm')" class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-emerald-500/50 transition text-xs font-semibold text-white">
           <span class="flex items-center gap-3">
             <span class="w-2.5 h-2.5 rounded-full bg-[#14F195]"></span> SVM (Phantom, Solflare, Backpack)
           </span>
@@ -1015,34 +1015,41 @@
     function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
 
     async function loginWithWallet(type) {
-      try {
-        if (type === 'phantom') {
-          if (!window.solana || !window.solana.isPhantom) {
-            alert("Phantom Wallet is not installed. Please install Phantom browser extension.");
-            window.open("https://phantom.app/", "_blank");
-            return;
-          }
-          const resp = await window.solana.connect();
-          const pubkey = resp.publicKey.toString();
-          currentUser = { name: `${pubkey.slice(0, 4)}...${pubkey.slice(-4)} (Solana)`, role: 'Verified Auditor' };
-          handleWalletAuthenticated(pubkey);
-        } else if (type === 'metamask') {
-          if (typeof window.ethereum === 'undefined') {
-            alert("MetaMask or EVM wallet is not detected. Please install MetaMask.");
-            window.open("https://metamask.io/", "_blank");
-            return;
-          }
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const address = accounts[0];
-          currentUser = { name: `${address.slice(0, 6)}...${address.slice(-4)} (EVM)`, role: 'Verified Auditor' };
-          handleWalletAuthenticated(address);
-        }
-        updateAuthUI();
-        closeLoginModal();
-      } catch (err) {
-        alert(`Connection rejected: ${err.message}`);
+  try {
+    if (type === 'svm' || type === 'phantom') {
+      const provider = window.backpack || window.solflare || window.phantom?.solana || (window.solana?.isPhantom ? window.solana : null);
+
+      if (!provider) {
+        alert("No Solana wallet extension detected. Please install Phantom, Solflare, or Backpack.");
+        window.open("https://phantom.app/", "_blank");
+        return;
       }
+
+      const resp = await provider.connect();
+      const pubkey = (resp.publicKey || provider.publicKey).toString();
+      currentUser = { name: `${pubkey.slice(0, 4)}...${pubkey.slice(-4)} (Solana)`, role: 'Verified Auditor' };
+      handleWalletAuthenticated(pubkey);
+
+    } else if (type === 'metamask') {
+      if (typeof window.ethereum === 'undefined') {
+        alert("MetaMask or EVM wallet is not detected. Please install MetaMask.");
+        window.open("https://metamask.io/", "_blank");
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const address = accounts[0];
+      currentUser = { name: `${address.slice(0, 6)}...${address.slice(-4)} (EVM)`, role: 'Verified Auditor' };
+      handleWalletAuthenticated(address);
     }
+
+    updateAuthUI();
+    closeLoginModal();
+  } catch (err) {
+    if (err.code !== 4001) {
+      alert(`Connection rejected: ${err.message || err}`);
+    }
+  }
+}
 
     function handleLogout() {
   currentUser = null;
