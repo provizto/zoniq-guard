@@ -2003,35 +2003,43 @@ jobs:
     };
 
     function applyDynamicPromotions() {
-      // 1. Cek parameter referral pada URL (?ref=KOLNAME)
+      // 1. Tangkap parameter link KOL (?ref=NAMA_KOL)
       const urlParams = new URLSearchParams(window.location.search);
       const refCode = urlParams.get('ref');
       if (refCode) {
-        localStorage.setItem('referred_by', refCode);
+        localStorage.setItem('referred_by', refCode.trim());
       }
 
+      // 2. Ambil data referral yang tersimpan
       const activeRef = localStorage.getItem('referred_by');
       const activeDiscount = activeRef ? PROMO_CONFIG.affiliateDiscount : PROMO_CONFIG.discountPercentage;
+      const badgeEl = document.getElementById('promo-badge-text');
 
-      // 2. Terapkan diskon pada harga paket langganan jika aktif
-      if (activeDiscount > 0) {
+      // 3. Terapkan diskon atau kembalikan ke default
+      if (activeDiscount > 0 && typeof PLAN_PRICING !== 'undefined') {
         const factor = (100 - activeDiscount) / 100;
         
-        // Update harga Pro
+        // Diskon otomatis paket Pro
         PLAN_PRICING.pro.sol = Number((0.05 * factor).toFixed(3));
         PLAN_PRICING.pro.eth = Number((0.01 * factor).toFixed(4));
         
-        // Update harga Enterprise
+        // Diskon otomatis paket Enterprise
         PLAN_PRICING.enterprise.sol = Number((0.25 * factor).toFixed(3));
         PLAN_PRICING.enterprise.eth = Number((0.05 * factor).toFixed(4));
 
-        const badgeEl = document.getElementById('promo-badge-text');
         if (badgeEl) {
-          badgeEl.innerText = `🎁 ${activeDiscount}% Referral Discount Activated (${activeRef || 'Promo'})`;
+          badgeEl.innerText = activeRef 
+            ? `🎁 ${activeDiscount}% Referral Discount Active (${activeRef})`
+            : `⚡ ${activeDiscount}% Launch Discount Active`;
+        }
+      } else {
+        // Jika tidak ada diskon atau diskon 0%, kembalikan ke teks default
+        if (badgeEl) {
+          badgeEl.innerText = PROMO_CONFIG.bannerBadge;
         }
       }
 
-      // 3. Update teks headline hero
+      // 4. Update teks $100+ di banner utama
       const valEl = document.getElementById('promo-value-display');
       if (valEl) valEl.innerText = PROMO_CONFIG.heroPromoValue;
     }
