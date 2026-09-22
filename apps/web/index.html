@@ -1141,18 +1141,22 @@
 }
 
     // ========================================================
-    // TELEGRAM PAYMENT NOTIFIER
+    // TELEGRAM PAYMENT NOTIFIER (PRODUCTION READY)
     // ========================================================
     async function notifyTelegramPayment(planType, txHash, network, buyerWallet) {
+      // Ambil kode referral yang tersimpan di browser pembeli
+      const activeRef = localStorage.getItem('referred_by') || 'Direct / None';
+
       try {
-        await fetch('http://localhost:4000/api/notify-payment', {
+        await fetch('/api/notify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             planType,
             txHash,
             network,
-            buyerWallet
+            buyerWallet,
+            referredBy: activeRef // Menyertakan nama KOL ke backend
           })
         });
       } catch (err) {

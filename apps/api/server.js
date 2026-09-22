@@ -198,25 +198,30 @@ app.post('/api/deep-audit', async (req, res) => {
   }
 });
 
-// ENDPOINT TELEGRAM AMAN (TOKEN TERSEMBUNYI DI .ENV)
+// ENDPOINT TELEGRAM (CREDENTIALS SECURED VIA .ENV)
 app.post('/api/notify-payment', async (req, res) => {
-  const { planType, txHash, network, buyerWallet } = req.body;
+  const { planType, txHash, network, buyerWallet, referredBy } = req.body;
   
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!botToken || !chatId) {
-    console.error("[ZONIQ-GUARD] TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID belum ada di .env");
+    console.error("[ZONIQ-GUARD] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in .env");
     return res.status(500).json({ success: false, error: 'Telegram credentials missing on server.' });
   }
 
+  const referralLabel = referredBy && referredBy !== 'Direct / None' 
+    ? `🎁 *Referral (KOL):* \`${referredBy}\`\n` 
+    : `🎁 *Referral:* \`Direct (No KOL)\`\n`;
+
   const message = 
-    `💰 *PEMBAYARAN PAKET MASUK!*\n\n` +
-    `📦 *Paket:* ${(planType || 'PRO').toUpperCase()}\n` +
-    `🌐 *Jaringan:* ${network || 'Unknown'}\n` +
-    `👤 *Pembeli:* \`${buyerWallet || 'Anonymous'}\`\n` +
+    `💰 *SUBSCRIPTION PAYMENT RECEIVED!*\n\n` +
+    `📦 *Plan:* ${(planType || 'PRO').toUpperCase()}\n` +
+    `🌐 *Network:* ${network || 'Unknown'}\n` +
+    `👤 *Buyer Wallet:* \`${buyerWallet || 'Anonymous'}\`\n` +
+    referralLabel +
     `🔗 *Tx Hash:* \`${txHash}\`\n\n` +
-    `_Zoniq Guard Production Notifier._`;
+    `_Zoniq Guard Automated Security Node_`;
 
   try {
     const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -231,12 +236,12 @@ app.post('/api/notify-payment', async (req, res) => {
     const result = await tgRes.json();
     return res.json({ success: result.ok });
   } catch (err) {
-    console.error("[ZONIQ-GUARD] Gagal kirim notif Telegram:", err);
+    console.error("[ZONIQ-GUARD] Failed to dispatch Telegram notification:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`[ZONIQ-GUARD] Security Core API running at http://localhost:${PORT}`);
-  console.log(`[ZONIQ-GUARD] Ready to receive audit & payment payloads.`);
+  console.log(`[ZONIQ-GUARD] Security Core API running on port ${PORT}`);
+  console.log(`[ZONIQ-GUARD] Ready to process security audit & payment payloads.`);
 });
