@@ -1274,7 +1274,7 @@
           lines.forEach((lineText, idx) => {
             if (/pub\s+authority\s*:\s*AccountInfo/i.test(lineText)) {
               detectedIssues.push({
-                id: "AEGIS-SOL-001",
+                id: "GUARD-SOL-001",
                 title: "Missing Signer Check on Vault Authority",
                 severity: "critical",
                 chain: "solana",
@@ -1294,7 +1294,7 @@
 
         if (activeRules.sol002 && (code.includes('seeds') && !code.includes('bump'))) {
           detectedIssues.push({
-            id: "AEGIS-SOL-002",
+            id: "GUARD-SOL-002",
             title: "Unchecked PDA Seeds Canonical Bump",
             severity: "high",
             chain: "solana",
@@ -1325,7 +1325,7 @@
             const hasAccessModifier = trimmed.includes('onlyOwner') || trimmed.includes('onlyRole');
             if (activeRules.arb002 && !hasAccessModifier) {
               detectedIssues.push({
-                id: "AEGIS-ARB-001",
+                id: "GUARD-ARB-001",
                 title: "Missing Access Control on Administrative Method",
                 severity: "critical",
                 chain: chain,
@@ -1345,7 +1345,7 @@
           if (activeRules.arb001 && (trimmed.includes('.call{value:') || trimmed.includes('.call{value :'))) {
             if (!hasReentrancyGuard) {
               detectedIssues.push({
-                id: "AEGIS-ARB-002",
+                id: "GUARD-ARB-002",
                 title: "Potential Reentrancy Without Guard",
                 severity: "critical",
                 chain: chain,
@@ -1953,7 +1953,7 @@ jobs:
             }
           }
 
-          const memoText = `AEGIS-PROOF:${targetName}:${score}:${Date.now()}`;
+          const memoText = `GUARD-PROOF:${targetName}:${score}:${Date.now()}`;
           const signature = await signer.signMessage(memoText);
 
           updateAttestationUI(
@@ -2042,7 +2042,7 @@ jobs:
       currentUser = { name: `${adminAddress.slice(0, 4)}...${adminAddress.slice(-4)}`, role: 'Protocol Architect (ADMIN)' };
       updateAuthUI();
       updateTierBadgeUI("ENTERPRISE (ADMIN)");
-      console.log(`[AEGIS-CORE] Admin authenticated: ${adminAddress}. Access: UNLIMITED.`);
+      console.log(`[GUARD-CORE] Admin authenticated: ${adminAddress}. Access: UNLIMITED.`);
     }
 
     function updateTierBadgeUI(tier) {
