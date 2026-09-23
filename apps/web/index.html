@@ -280,7 +280,7 @@
             </h1>
             
             <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl" id="hero-subtitle">
-              Zero-latency invariant analysis for Solana & EVM. Connect your wallet to claim instant multi-chain scans. Zero credit cards.
+              Zero-latency invariant analysis for Solana & EVM. Connect your wallet to claim 3 instant multi-chain scans. Zero credit cards.
             </p>
           </div>
           <div class="flex items-center gap-3 relative z-10">
@@ -1094,54 +1094,54 @@
       const savedTier = localStorage.getItem('aegis_user_tier') || 'Free Tier';
       const savedQuota = localStorage.getItem('aegis_scan_quota');
       
-      // Default: 1 free trial scan for visitors
-      const quota = savedQuota !== null ? parseInt(savedQuota, 10) : 1;
+      // Default: 3 free trial scans for visitors
+      const quota = savedQuota !== null ? parseInt(savedQuota, 10) : 3;
       return { tier: savedTier, quota: quota, isUnlimited: false };
     }
 
     function syncQuotaDisplay() {
-  const quotaBadge = document.getElementById('user-quota-badge');
-  const creditsDisplay = document.getElementById('scan-credits-display');
-  const progressBar = document.querySelector('.bg-gradient-to-r') || document.getElementById('quota-progress-bar');
+      const quotaBadge = document.getElementById('user-quota-badge');
+      const creditsDisplay = document.getElementById('scan-credits-display');
+      const progressBar = document.querySelector('.bg-gradient-to-r') || document.getElementById('quota-progress-bar');
 
-  // KONDISI 1: Belum Login (Guest Free Tier)
-  if (!currentUser) {
-    if (creditsDisplay) creditsDisplay.innerText = '1 / 1';
-    if (quotaBadge) {
-      quotaBadge.innerText = '1 Free';
-      quotaBadge.className = 'text-emerald-400 font-mono text-xs';
-    }
-    if (progressBar) progressBar.style.width = '100%';
-    return;
-  }
+      // KONDISI 1: Belum Login (Guest Free Tier)
+      if (!currentUser) {
+        if (creditsDisplay) creditsDisplay.innerText = '3 / 3';
+        if (quotaBadge) {
+          quotaBadge.innerText = '3 Free';
+          quotaBadge.className = 'text-emerald-400 font-mono text-xs';
+        }
+        if (progressBar) progressBar.style.width = '100%';
+        return;
+      }
 
-  // KONDISI 2: Sudah Login
-  const acc = (typeof getScanQuota === 'function') ? getScanQuota() : { isUnlimited: false, quota: 0, tier: 'free' };
+      // KONDISI 2: Sudah Login
+      const acc = (typeof getScanQuota === 'function') ? getScanQuota() : { isUnlimited: false, quota: 0, tier: 'free' };
 
-  if (acc.isUnlimited) {
-    if (creditsDisplay) creditsDisplay.innerText = 'UNLIMITED';
-    if (quotaBadge) {
-      quotaBadge.innerText = 'Unlimited (Admin)';
-      quotaBadge.className = 'text-indigo-400 font-bold';
+      if (acc.isUnlimited) {
+        if (creditsDisplay) creditsDisplay.innerText = 'UNLIMITED';
+        if (quotaBadge) {
+          quotaBadge.innerText = 'Unlimited (Admin)';
+          quotaBadge.className = 'text-indigo-400 font-bold';
+        }
+        if (progressBar) progressBar.style.width = '100%';
+      } else if (acc.quota > 0) {
+        const maxQuota = acc.tier?.toLowerCase() === 'pro' ? 25 : 3;
+        if (creditsDisplay) creditsDisplay.innerText = `${acc.quota} / ${maxQuota}`;
+        if (quotaBadge) {
+          quotaBadge.innerText = `${acc.quota} Left (${acc.tier})`;
+          quotaBadge.className = 'text-emerald-400 font-bold';
+        }
+        if (progressBar) progressBar.style.width = `${Math.min(100, (acc.quota / maxQuota) * 100)}%`;
+      } else {
+        if (creditsDisplay) creditsDisplay.innerText = '0 Left';
+        if (quotaBadge) {
+          quotaBadge.innerText = '0 Left (Exhausted)';
+          quotaBadge.className = 'text-rose-400 font-bold';
+        }
+        if (progressBar) progressBar.style.width = '0%';
+      }
     }
-    if (progressBar) progressBar.style.width = '100%';
-  } else if (acc.quota > 0) {
-    const maxQuota = acc.tier?.toLowerCase() === 'pro' ? 25 : 1;
-    if (creditsDisplay) creditsDisplay.innerText = `${acc.quota} / ${maxQuota}`;
-    if (quotaBadge) {
-      quotaBadge.innerText = `${acc.quota} Left (${acc.tier})`;
-      quotaBadge.className = 'text-emerald-400 font-bold';
-    }
-    if (progressBar) progressBar.style.width = `${Math.min(100, (acc.quota / maxQuota) * 100)}%`;
-  } else {
-    if (creditsDisplay) creditsDisplay.innerText = '0 Left';
-    if (quotaBadge) {
-      quotaBadge.innerText = '0 Left (Exhausted)';
-      quotaBadge.className = 'text-rose-400 font-bold';
-    }
-    if (progressBar) progressBar.style.width = '0%';
-  }
-}
 
     // ========================================================
     // TELEGRAM PAYMENT NOTIFIER (PRODUCTION READY)
