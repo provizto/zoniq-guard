@@ -1,8 +1,9 @@
 {
+  "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/deep-audit",
+      "destination": "/api/deep-audit.js"
     },
     {
       "source": "/(.*)",
