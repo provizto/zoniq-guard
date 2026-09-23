@@ -83,6 +83,7 @@
     .card-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
     .card-highlight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; }
     .card-accent { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; }
+    .card-disclaimer { background: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
 
     h1 { margin: 0; font-size: 18pt; font-weight: 900; letter-spacing: -0.5px; color: #0f172a; line-height: 1.15; }
     h2 { margin: 0 0 8px 0; font-size: 11pt; font-weight: 800; color: #0f172a; border-left: 3px solid #4f46e5; padding-left: 7px; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -255,7 +256,7 @@
         </div>
         <div class="card-box" style="border-left: 3px solid #6366f1;">
           <h3 style="color: #4338ca;">Automated GitHub CI/CD Security Gate</h3>
-          <p>Integrate automated security gates directly into deployment pipelines via the official repository (<code class="mono">provizto/zoniq-guard</code>). Every pull request is statically analyzed; any commit introducing Critical or High vulnerabilities is automatically blocked from merging into production.</p>
+          <p>Integrate automated security gates directly into deployment pipelines via native GitHub Actions. Every pull request is statically analyzed; any commit introducing Critical or High vulnerabilities is automatically blocked from merging into production.</p>
         </div>
       </div>
 
@@ -363,17 +364,17 @@ jobs:
       <div class="grid-2" style="margin-bottom: 12px;">
         <div class="card-box" style="border-left: 3px solid #8b5cf6;">
           <h3 style="color: #6d28d9;">Real Utility Product — Zero Speculative Fatigue</h3>
-          <p>Unlike empty speculative token projects, Zoniq Guard provides indispensable developer infrastructure. Your audience immediately claims <strong>3 free audit scans valued at $100+</strong> and an automatic <strong>10% discount</strong> on all tier upgrades through your referral link.</p>
+          <p>Unlike speculative token projects, Zoniq Guard provides indispensable developer infrastructure. Your audience claims <strong>3 free audit scans valued at $100+</strong> and an automatic <strong>10% discount</strong> on all tier upgrades through your referral link.</p>
         </div>
         <div class="card-box" style="border-left: 3px solid #06b6d4;">
           <h3 style="color: #0e7490;">Transparent 1-Tier Affiliate Tracking</h3>
-          <p>Clean URL tracking (<code class="mono">?ref=KOLNAME</code>) automatically captures and stores referral provenance in client local storage. When a referred user executes an on-chain plan purchase, the affiliate transaction is registered and verifiable in real-time.</p>
+          <p>Clean URL tracking (<code class="mono">?ref=KOLNAME</code>) automatically captures referral provenance in client local storage. When a referred user executes an on-chain plan purchase, the affiliate transaction is registered and verifiable in real-time.</p>
         </div>
       </div>
 
       <!-- Affiliate Mechanics -->
       <h2>Affiliate Incentive &amp; Dynamic Discount Mechanics</h2>
-      <div class="grid-3" style="margin-bottom: 12px;">
+      <div class="grid-3" style="margin-bottom: 10px;">
         <div class="card-accent">
           <h3>1. Dedicated Partner URL</h3>
           <p class="mono" style="font-size: 7.5pt; color: #4f46e5; word-break: break-all;">guard.zoniqfi.com/?ref=KOLNAME</p>
@@ -391,12 +392,12 @@ jobs:
 
       <!-- Copywriting Promo Kit -->
       <h2>Ready-to-Use KOL Promotional Copy Suite</h2>
-      <div class="card-box" style="margin-bottom: 12px; background: #0f172a; color: #f8fafc; padding: 10px 14px;">
+      <div class="card-box" style="margin-bottom: 10px; background: #0f172a; color: #f8fafc; padding: 8px 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
           <span style="font-size: 7.5pt; color: #38bdf8; font-family: monospace; font-weight: 700;">PROMOTIONAL TEMPLATE (TWITTER / X &amp; TELEGRAM CHANNELS)</span>
           <span style="font-size: 7.5pt; color: #94a3b8;">Copy &amp; Broadcast</span>
         </div>
-        <p style="color: #cbd5e1; font-size: 8pt; font-family: monospace; margin: 0; line-height: 1.45;">
+        <p style="color: #cbd5e1; font-size: 7.5pt; font-family: monospace; margin: 0; line-height: 1.4;">
           &#34;Tired of waiting 4 weeks and paying $15K+ to audit your smart contracts? 🛡️<br><br>
           @zoniqfi just launched Zoniq Guard — an automated AST security engine for Solana Anchor &amp; Arbitrum EVM with instant on-chain proof of audit!<br><br>
           🎁 Claim $100+ worth of audit scans for FREE (No credit cards needed):<br>
@@ -407,7 +408,7 @@ jobs:
 
       <!-- Official Ecosystem Directory -->
       <h2>Official Ecosystem Directory &amp; Technical Channels</h2>
-      <table class="table-spec" style="margin-bottom: 10px;">
+      <table class="table-spec" style="margin-bottom: 8px;">
         <thead>
           <tr>
             <th>Resource / Channel</th>
@@ -449,9 +450,18 @@ jobs:
         </tbody>
       </table>
 
-      <!-- Security & Legal Disclaimer -->
-      <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 7pt; color: #64748b; line-height: 1.35;">
-        <strong>Legal &amp; Security Disclaimer:</strong> Zoniq Guard provides automated deterministic heuristic and neural AST static evaluations. Audit findings, scores, and cryptographic attestations do not constitute formal mathematical verification, legal insurance, or financial investment advice. Deployment risks remain the sole responsibility of protocol developers and project owners.
+      <!-- Formal Security & Legal Disclaimer (Synced with On-Chain Modal) -->
+      <div class="card-disclaimer">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+          <span style="font-size: 8.5pt;">⚠️</span>
+          <strong style="font-size: 7.5pt; color: #92400e; text-transform: uppercase; letter-spacing: 0.3px;">Security &amp; Audit Disclaimer (Protocol Terms)</strong>
+        </div>
+        <p style="font-size: 6.8pt; color: #78350f; line-height: 1.35; margin: 0 0 3px 0;">
+          <strong>Automated Static Analysis:</strong> Zoniq-Guard conducts deterministic heuristic and AST evaluations. Reports and scores do not constitute formal mathematical verification, escrow insurance, or financial advice.
+        </p>
+        <p style="font-size: 6.8pt; color: #78350f; line-height: 1.35; margin: 0;">
+          <strong>Liability Limitation:</strong> Cryptographic notarization proves static state integrity at the time of scan. Smart contract deployments and operational risks are the sole responsibility of the developer or project owner.
+        </p>
       </div>
     </div>
 
