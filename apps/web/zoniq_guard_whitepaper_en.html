@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoniq Guard — Technical Whitepaper &amp; Partner Kit (EN)</title>
+  <style>
+    @page { margin: 0; size: A4; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #0b0f17; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    body { padding: 24px 0; margin: 0 auto; max-width: 900px; }
+    
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 20px auto;
+      padding: 16mm 18mm 14mm 18mm;
+      background-color: #ffffff;
+      border-radius: 4px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .page-content { flex: 1; }
+    .page-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    @media print {
+      body { padding: 0; background: transparent; }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+        width: 100%;
+        height: 100%;
+        page-break-after: always;
+        break-after: page;
+      }
+      .page:last-child { page-break-after: auto; break-after: auto; }
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      color: #4338ca;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .tag-svm { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-weight: 700; font-size: 7.5pt; padding: 2px 6px; border-radius: 4px; }
+    .tag-evm { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-weight: 700; font-size: 7.5pt; padding: 2px 6px; border-radius: 4px; }
+    
+    .header-banner {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    .card-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+    .card-highlight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; }
+    .card-accent { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; }
+
+    h1 { margin: 0; font-size: 18pt; font-weight: 900; letter-spacing: -0.5px; color: #0f172a; line-height: 1.15; }
+    h2 { margin: 0 0 8px 0; font-size: 11pt; font-weight: 800; color: #0f172a; border-left: 3px solid #4f46e5; padding-left: 7px; text-transform: uppercase; letter-spacing: 0.3px; }
+    h3 { margin: 0 0 4px 0; font-size: 9pt; font-weight: 700; color: #1e293b; }
+    p { margin: 0 0 6px 0; font-size: 8.5pt; line-height: 1.45; color: #334155; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    .table-spec { width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 6px; }
+    .table-spec th { background: #0f172a; color: #ffffff; text-align: left; padding: 6px 8px; font-weight: 600; }
+    .table-spec td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+    .table-spec tr:nth-child(even) { background: #f8fafc; }
+    
+    .link-badge { font-size: 8pt; color: #2563eb; text-decoration: none; font-weight: 600; word-break: break-all; }
+    .bullet-point { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; font-size: 8pt; line-height: 1.35; color: #334155; }
+    .bullet-icon { color: #4f46e5; font-weight: bold; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: CORE ARCHITECTURE & DUAL-ENGINE SPECIFICATIONS                   -->
+  <!-- ========================================================================= -->
+  <section class="page">
+    <div class="page-content">
+      <div class="header-banner">
+        <div>
+          <div class="brand-badge">PROTOCOL SPECIFICATION &amp; ARCHITECTURE</div>
+          <h1 style="margin-top: 4px;">ZONIQ GUARD <span style="font-weight: 400; font-size: 13pt; color: #64748b;">| Core v2.4</span></h1>
+          <p style="margin: 2px 0 0 0; font-size: 8.5pt; color: #475569; font-weight: 500;">
+            Next-Gen Deterministic AST &amp; Neural Smart Contract Security Engine
+          </p>
+        </div>
+        <div style="text-align: right; font-size: 8pt; color: #64748b;">
+          <div class="mono" style="font-weight: 700; color: #0f172a;">TECHNICAL WHITEPAPER</div>
+          <div>Multi-Chain: Solana SVM &amp; Arbitrum EVM</div>
+        </div>
+      </div>
+
+      <!-- Problem vs Solution -->
+      <div class="grid-2" style="margin-bottom: 12px;">
+        <div class="card-box" style="border-left: 3px solid #ef4444;">
+          <h3 style="color: #991b1b;">Industry Challenge: The Audit Bottleneck</h3>
+          <p>Manual Web3 security audits cost $10,000–$40,000, take 3 to 6 weeks, and enforce prohibitive per-line pricing. Web2 SaaS audit tools trap builders in expensive subscription seats ($250+/month) requiring corporate credit cards and KYC, paralyzing agile development teams.</p>
+        </div>
+        <div class="card-box" style="border-left: 3px solid #10b981;">
+          <h3 style="color: #065f46;">The Zoniq Guard Breakthrough</h3>
+          <p>Instant, zero-login in-browser Abstract Syntax Tree (AST) invariant analysis coupled with deep neural logic verification. Delivers micro-settlement in native SOL and ETH via Phantom and MetaMask, automated GitHub CI/CD PR blocking, and cryptographic on-chain proof of audit.</p>
+        </div>
+      </div>
+
+      <!-- Dual Engine Verification Matrix -->
+      <h2>Dual-Engine Invariant Verification Matrix</h2>
+      <div class="grid-2" style="margin-bottom: 12px;">
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0;">Solana Anchor Engine (SVM)</h3>
+            <span class="tag-svm">SOLANA SVM</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Missing Signer Verification:</strong> Traverses account structures to catch authority accounts defined as raw <code class="mono">AccountInfo</code> instead of enforced <code class="mono">Signer</code> types, preventing arbitrary program takeovers.</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Canonical Bump Derivation:</strong> Enforces explicit canonical bump constraints on PDA derivations to mitigate address collision and account-spoofing vectors.</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Discriminator &amp; Owner Integrity:</strong> Validates 8-byte Anchor discriminators to ensure complete protection against type-cosplay account injections.</span>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0;">Arbitrum &amp; EVM AST Engine</h3>
+            <span class="tag-evm">ARBITRUM / EVM</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Reentrancy &amp; CEI Pattern Check:</strong> Pinpoints external low-level calls (<code class="mono">.call{value: ...}</code>) initiated prior to internal state mutations or missing OpenZeppelin <code class="mono">nonReentrant</code> modifiers (SWC-107).</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Administrative Access Control:</strong> Flags public methods managing critical emergency drain or fee adjustments lacking <code class="mono">onlyOwner</code> or role-based gates (CWE-284).</span>
+          </div>
+          <div class="bullet-point">
+            <span class="bullet-icon">■</span>
+            <span><strong>Deterministic Unified Diff:</strong> Generates immediate unified line diffs with precise, copy-pasteable remediation patches.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Pipeline Architecture -->
+      <h2>Execution Pipeline &amp; Security Gate Architecture</h2>
+      <div class="grid-2" style="margin-bottom: 10px;">
+        <div class="card-accent">
+          <h3>Local Client AST Traversal</h3>
+          <p>Directly in your browser, source files are tokenized into syntax trees without sending unreleased, proprietary code to central servers. Violations of security invariants are identified in sub-second execution speeds.</p>
+        </div>
+        <div class="card-accent">
+          <h3>Cloud Deep Audit Coprocessor</h3>
+          <p>For high-order logical flows, an asynchronous edge coprocessor validates complex multi-instruction interactions, assigning quantitative security scores (0–100) and actionable remediation strategies.</p>
+        </div>
+      </div>
+
+      <!-- Benchmark Matrix -->
+      <table class="table-spec">
+        <thead>
+          <tr>
+            <th>Module Name</th>
+            <th>Target Language / Standard</th>
+            <th>Detection Scope</th>
+            <th>Latency</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Anchor Invariant Core</strong></td>
+            <td>Rust 1.75+, Anchor v0.30+</td>
+            <td>Signer, PDA Bump, Account Ownership</td>
+            <td>&lt; 380ms</td>
+          </tr>
+          <tr>
+            <td><strong>Solidity AST Core</strong></td>
+            <td>Solidity 0.8.0 - 0.8.26+</td>
+            <td>Reentrancy, Access Control, CEI Flow</td>
+            <td>&lt; 320ms</td>
+          </tr>
+          <tr>
+            <td><strong>Neural Semantic Coprocessor</strong></td>
+            <td>Multi-Chain Protocols</td>
+            <td>Complex Business Logic Flaws &amp; Edge Cases</td>
+            <td>&lt; 2.2s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="page-footer">
+      <span>Zoniq Guard — Technical Whitepaper</span>
+      <span>Section 1: Architecture &amp; Security Invariants (EN)</span>
+      <span>Page 1 of 3</span>
+    </footer>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: ATTESTATION, CI/CD PIPELINE & CUSTOMER PRICING                   -->
+  <!-- ========================================================================= -->
+  <section class="page">
+    <div class="page-content">
+      <div class="header-banner">
+        <div>
+          <div class="brand-badge">DEVELOPER WORKFLOW &amp; MONETIZATION</div>
+          <h1 style="margin-top: 4px;">CUSTOMER PRICING &amp; CI/CD GATES</h1>
+          <p style="margin: 2px 0 0 0; font-size: 8.5pt; color: #475569; font-weight: 500;">
+            Cryptographic On-Chain Attestation, Pipeline Integration, and Flexible Micro-Tiers
+          </p>
+        </div>
+        <div style="text-align: right; font-size: 8pt; color: #64748b;">
+          <div class="mono" style="font-weight: 700; color: #0f172a;">PRODUCT GUIDE</div>
+          <div>Developer Implementation</div>
+        </div>
+      </div>
+
+      <!-- Attestation & CI/CD Features -->
+      <div class="grid-2" style="margin-bottom: 12px;">
+        <div class="card-highlight">
+          <h3 style="color: #065f46;">Cryptographic Proof of Audit</h3>
+          <p>Audits are notarized on-chain rather than sealed in mutable PDFs. Solana releases are authenticated via zero-gas Ed25519 cryptographic signatures (<code class="mono">ZONIQ-PROOF</code> memo), while EVM contracts are recorded on Arbitrum One L2. Each certificate includes an interactive QR code linking to verifiable block explorer records.</p>
+        </div>
+        <div class="card-box" style="border-left: 3px solid #6366f1;">
+          <h3 style="color: #4338ca;">Automated GitHub CI/CD Security Gate</h3>
+          <p>Integrate automated security gates directly into deployment pipelines via the official repository (<code class="mono">provizto/zoniq-guard</code>). Every pull request is statically analyzed; any commit introducing Critical or High vulnerabilities is automatically blocked from merging into production.</p>
+        </div>
+      </div>
+
+      <!-- GitHub CI/CD Workflow Preview -->
+      <h2>Native GitHub Actions Integration</h2>
+      <div class="card-box" style="margin-bottom: 12px; background: #0f172a; color: #e2e8f0; padding: 8px 12px;">
+        <div style="display: flex; justify-content: space-between; font-size: 7.5pt; color: #94a3b8; margin-bottom: 4px; font-family: monospace;">
+          <span>.github/workflows/zoniq-guard.yml</span>
+          <span style="color: #38bdf8;">Pre-Merge Protection</span>
+        </div>
+        <pre class="mono" style="margin: 0; font-size: 7.5pt; line-height: 1.35; color: #cbd5e1;">name: Zoniq Guard Security Gate
+on: [push, pull_request]
+jobs:
+  contract-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Zoniq Guard Analyzer
+        uses: zoniq/guard-action@v2
+        with:
+          fail-on-severity: 'CRITICAL,HIGH'
+          solana-programs: './programs/**/src/lib.rs'
+          arbitrum-contracts: './contracts/**/*.sol'</pre>
+      </div>
+
+      <!-- Pricing Plans & Quota -->
+      <h2>Transparent Customer Pricing Tiers</h2>
+      <div class="grid-3" style="margin-bottom: 12px;">
+        <div class="card-box" style="border-top: 3px solid #6366f1;">
+          <h3 style="color: #4338ca;">🎁 Free Starter Tier</h3>
+          <div style="font-size: 14pt; font-weight: 900; color: #0f172a; margin: 4px 0;" class="mono">100% FREE</div>
+          <p style="font-size: 8pt; color: #64748b;">$100+ Estimated Industry Value</p>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>3 Full Deep Audit Scans</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Instant Web3 Wallet Connect</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Zero Credit Cards / KYC Required</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Interactive Unified Diff Fixes</span></div>
+        </div>
+
+        <div class="card-box" style="border-top: 3px solid #3b82f6;">
+          <h3 style="color: #1d4ed8;">⚡ Pro Security Plan</h3>
+          <div style="font-size: 13pt; font-weight: 900; color: #0f172a; margin: 4px 0;" class="mono">0.05 SOL <span style="font-size: 8pt; color: #64748b;">/ 0.01 ETH</span></div>
+          <p style="font-size: 8pt; color: #64748b;">For independent engineers &amp; teams</p>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>+25 Deep Audit Scan Credits</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Full Invariant AST Inspector</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Cryptographic On-Chain Attestation</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span><strong>10% OFF</strong> for First-Time Buyers</span></div>
+        </div>
+
+        <div class="card-box" style="border-top: 3px solid #10b981;">
+          <h3 style="color: #047857;">🛡️ Enterprise Plan</h3>
+          <div style="font-size: 13pt; font-weight: 900; color: #0f172a; margin: 4px 0;" class="mono">0.25 SOL <span style="font-size: 8pt; color: #64748b;">/ 0.05 ETH</span></div>
+          <p style="font-size: 8pt; color: #64748b;">For live mainnet dApps &amp; protocols</p>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>+100 Comprehensive Scans</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>Priority Neural Coprocessor Queue</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span>CI/CD Webhook Security Bot</span></div>
+          <div class="bullet-point"><span class="bullet-icon">✓</span><span><strong>10% OFF</strong> for First-Time Buyers</span></div>
+        </div>
+      </div>
+
+      <!-- Quickstart -->
+      <h2>Quickstart Implementation in 3 Steps</h2>
+      <div class="grid-3" style="font-size: 8pt;">
+        <div class="card-box">
+          <strong>1. Connect Web3 Wallet</strong>
+          <p style="margin-top: 2px;">Visit <code class="mono">guard.zoniqfi.com</code> and connect Phantom, Solflare, or MetaMask to unlock your 3 free audit scans immediately.</p>
+        </div>
+        <div class="card-box">
+          <strong>2. Analyze &amp; Patch</strong>
+          <p style="margin-top: 2px;">Paste source code or provide a public GitHub URL. Review detected vulnerabilities and copy inline remediation diffs.</p>
+        </div>
+        <div class="card-box">
+          <strong>3. Attest On-Chain</strong>
+          <p style="margin-top: 2px;">Generate a cryptographic on-chain verification certificate to prove protocol security to investors and community members.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      <span>Zoniq Guard — Technical Whitepaper</span>
+      <span>Section 2: Customer Guide, Quotas &amp; CI/CD Integration (EN)</span>
+      <span>Page 2 of 3</span>
+    </footer>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 3: 1-TIER KOL PARTNER KIT & ECOSYSTEM DIRECTORY                     -->
+  <!-- ========================================================================= -->
+  <section class="page">
+    <div class="page-content">
+      <div class="header-banner">
+        <div>
+          <div class="brand-badge" style="background: #fdf4ff; border-color: #f0abfc; color: #86198f;">AFFILIATE &amp; ECOSYSTEM NETWORK</div>
+          <h1 style="margin-top: 4px;">KOL PARTNERSHIP &amp; ECOSYSTEM DIRECTORY</h1>
+          <p style="margin: 2px 0 0 0; font-size: 8.5pt; color: #475569; font-weight: 500;">
+            1-Tier Clean Affiliate Model for Influencers, Developer Guilds, and Web3 Communities
+          </p>
+        </div>
+        <div style="text-align: right; font-size: 8pt; color: #64748b;">
+          <div class="mono" style="font-weight: 700; color: #0f172a;">PARTNER PROGRAM</div>
+          <div>Global Distribution</div>
+        </div>
+      </div>
+
+      <!-- Why Partner With Us -->
+      <div class="grid-2" style="margin-bottom: 12px;">
+        <div class="card-box" style="border-left: 3px solid #8b5cf6;">
+          <h3 style="color: #6d28d9;">Real Utility Product — Zero Speculative Fatigue</h3>
+          <p>Unlike empty speculative token projects, Zoniq Guard provides indispensable developer infrastructure. Your audience immediately claims <strong>3 free audit scans valued at $100+</strong> and an automatic <strong>10% discount</strong> on all tier upgrades through your referral link.</p>
+        </div>
+        <div class="card-box" style="border-left: 3px solid #06b6d4;">
+          <h3 style="color: #0e7490;">Transparent 1-Tier Affiliate Tracking</h3>
+          <p>Clean URL tracking (<code class="mono">?ref=KOLNAME</code>) automatically captures and stores referral provenance in client local storage. When a referred user executes an on-chain plan purchase, the affiliate transaction is registered and verifiable in real-time.</p>
+        </div>
+      </div>
+
+      <!-- Affiliate Mechanics -->
+      <h2>Affiliate Incentive &amp; Dynamic Discount Mechanics</h2>
+      <div class="grid-3" style="margin-bottom: 12px;">
+        <div class="card-accent">
+          <h3>1. Dedicated Partner URL</h3>
+          <p class="mono" style="font-size: 7.5pt; color: #4f46e5; word-break: break-all;">guard.zoniqfi.com/?ref=KOLNAME</p>
+          <p style="font-size: 7.5pt; margin-top: 4px;">Distribute your dedicated referral link across X (Twitter), Telegram, Discord, and technical articles.</p>
+        </div>
+        <div class="card-accent">
+          <h3>2. Instant 10% User Rebate</h3>
+          <p style="font-size: 8pt;">Your audience enjoys an automatic 10% price reduction across SOL and ETH checkout prices when arriving via your link.</p>
+        </div>
+        <div class="card-accent">
+          <h3>3. Real-Time Telegram Dispatch</h3>
+          <p style="font-size: 8pt;">Confirmed on-chain transactions trigger automated payment notices to the administrative webhook for immediate tracking.</p>
+        </div>
+      </div>
+
+      <!-- Copywriting Promo Kit -->
+      <h2>Ready-to-Use KOL Promotional Copy Suite</h2>
+      <div class="card-box" style="margin-bottom: 12px; background: #0f172a; color: #f8fafc; padding: 10px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 7.5pt; color: #38bdf8; font-family: monospace; font-weight: 700;">PROMOTIONAL TEMPLATE (TWITTER / X &amp; TELEGRAM CHANNELS)</span>
+          <span style="font-size: 7.5pt; color: #94a3b8;">Copy &amp; Broadcast</span>
+        </div>
+        <p style="color: #cbd5e1; font-size: 8pt; font-family: monospace; margin: 0; line-height: 1.45;">
+          &#34;Tired of waiting 4 weeks and paying $15K+ to audit your smart contracts? 🛡️<br><br>
+          @zoniqfi just launched Zoniq Guard — an automated AST security engine for Solana Anchor &amp; Arbitrum EVM with instant on-chain proof of audit!<br><br>
+          🎁 Claim $100+ worth of audit scans for FREE (No credit cards needed):<br>
+          👉 https://guard.zoniqfi.com/?ref=[YOUR_CODE]<br><br>
+          ⚡ Extra 10% OFF all Pro and Enterprise tiers for my community!&#34;
+        </p>
+      </div>
+
+      <!-- Official Ecosystem Directory -->
+      <h2>Official Ecosystem Directory &amp; Technical Channels</h2>
+      <table class="table-spec" style="margin-bottom: 10px;">
+        <thead>
+          <tr>
+            <th>Resource / Channel</th>
+            <th>Official Direct URL</th>
+            <th>Primary Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Audit Application (dApp)</strong></td>
+            <td><a href="https://guard.zoniqfi.com" class="link-badge">https://guard.zoniqfi.com</a></td>
+            <td>In-browser AST scanner, inspector, &amp; on-chain proof portal</td>
+          </tr>
+          <tr>
+            <td><strong>Ecosystem Portal</strong></td>
+            <td><a href="https://zoniqfi.com" class="link-badge">https://zoniqfi.com</a></td>
+            <td>Official home of Zoniq Digital Core Labs</td>
+          </tr>
+          <tr>
+            <td><strong>GitHub Repository</strong></td>
+            <td><a href="https://github.com/provizto/zoniq-guard" class="link-badge">https://github.com/provizto/zoniq-guard</a></td>
+            <td>Source code, AST invariant ruleset, &amp; CI/CD Action workflows</td>
+          </tr>
+          <tr>
+            <td><strong>Telegram News Channel</strong></td>
+            <td><a href="https://t.me/zoniqfiofficial" class="link-badge">https://t.me/zoniqfiofficial</a></td>
+            <td>Official protocol announcements, releases, &amp; updates</td>
+          </tr>
+          <tr>
+            <td><strong>Telegram Community</strong></td>
+            <td><a href="https://t.me/zoniqfi_community" class="link-badge">https://t.me/zoniqfi_community</a></td>
+            <td>Developer discussions, ecosystem support, &amp; partnerships</td>
+          </tr>
+          <tr>
+            <td><strong>Discord Workspace</strong></td>
+            <td><a href="https://discord.gg/zoniqfi" class="link-badge">https://discord.gg/zoniqfi</a></td>
+            <td>Technical support, engineering roundtables, &amp; integration bots</td>
+          </tr>
+          <tr>
+            <td><strong>X (Twitter)</strong></td>
+            <td><a href="https://x.com/zoniqfi" class="link-badge">https://x.com/zoniqfi</a></td>
+            <td>Global public communications, dev tutorials, &amp; campaign updates</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Security & Legal Disclaimer -->
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 7pt; color: #64748b; line-height: 1.35;">
+        <strong>Legal &amp; Security Disclaimer:</strong> Zoniq Guard provides automated deterministic heuristic and neural AST static evaluations. Audit findings, scores, and cryptographic attestations do not constitute formal mathematical verification, legal insurance, or financial investment advice. Deployment risks remain the sole responsibility of protocol developers and project owners.
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      <span>Zoniq Guard — Technical Whitepaper</span>
+      <span>Section 3: KOL Partner Program, Promo Suite &amp; Ecosystem Directory (EN)</span>
+      <span>Page 3 of 3</span>
+    </footer>
+  </section>
+
+</body>
+</html>
