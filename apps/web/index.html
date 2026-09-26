@@ -1202,7 +1202,7 @@
     }
 
     // 3. Kirim ke backend port 5000
-    await fetch('http://localhost:5000/api/notify-payment', {
+    await fetch('/api/notify-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
