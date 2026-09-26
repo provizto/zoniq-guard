@@ -1187,9 +1187,9 @@
     // ========================================================
     async function notifyTelegramPayment(planType, txHash, network, buyerWallet) {
   try {
-    // 1. Ambil kode referral dari URL ?ref=... atau localStorage (tanpa placeholder paksaan)
+    // 1. Ambil kode referral murni HANYA jika ada di URL ?ref=...
     const urlParams = new URLSearchParams(window.location.search);
-    const activeRef = urlParams.get('ref') || localStorage.getItem('referred_by') || '';
+    const activeRef = urlParams.get('ref') || '';
 
     // 2. Hitung komisi jika ada referral
     let commission = '-';
@@ -1201,7 +1201,7 @@
       }
     }
 
-    // 3. Kirim ke backend port 5000
+    // 3. Kirim ke Vercel Serverless API (/api/notify-payment)
     await fetch('/api/notify-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
